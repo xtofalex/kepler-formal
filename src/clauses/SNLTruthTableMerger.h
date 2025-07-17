@@ -21,7 +21,6 @@ class SNLTruthTableMerger {
  private:
   const std::vector<const naja::NL::SNLTruthTable*>& inputsToMerge_;
   const naja::NL::SNLTruthTable& base_;
-  BoolExpr boolExpr_;
 };
 
 }  // namespace KEPLER_FORMAL
