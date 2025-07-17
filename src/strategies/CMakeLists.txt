@@ -11,4 +11,4 @@ add_library(formal_strategies STATIC
 
 # Make headers accessible to other targets
 target_include_directories(formal_strategies PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/miter)
-target_link_libraries(formal_strategies formal_structures naja_dnl)
+target_link_libraries(formal_strategies kepler_clauses formal_structures naja_dnl)

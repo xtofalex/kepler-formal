@@ -7,8 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Create a static library target
 add_library(kepler_clauses STATIC
     SNLTruthTableMerger.cpp
+    SNLLogicCloud.cpp
+    SNLTruthTable2BoolExpr.cpp
 )
 
 # Make headers accessible to other targets
 target_include_directories(kepler_clauses PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(kepler_clauses formal_structures naja_nl)
+target_link_libraries(kepler_clauses PUBLIC formal_structures naja_nl naja_dnl)

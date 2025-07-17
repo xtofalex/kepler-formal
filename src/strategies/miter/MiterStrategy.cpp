@@ -2,6 +2,8 @@
 #include "BoolExpr.h"
 #include "DNL.h"
 #include "SNLDesignModeling.h"
+#include "SNLLogicCloud.h"
+#include "SNLTruthTable2BoolExpr.h"
 
 using namespace KEPLER_FORMAL;
 using namespace naja::DNL;
@@ -108,4 +110,15 @@ void MiterStrategy::build() {
   inputs_ = collectInputs();
   // Collect outputs
   outputs_ = collectOutputs();
+  
+  for (auto out : outputs_) {
+    SNLLogicCloud cloud(out);
+    cloud.compute();
+    std::vector<std::string> varNames;
+    for (auto input : inputs_) {
+      varNames.push_back(
+          std::to_string(input));
+    }
+    POs_.push_back(*TruthTableToBoolExpr(cloud.getTruthTable(), varNames));
+  }
 }
