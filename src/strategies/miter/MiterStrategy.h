@@ -1,8 +1,8 @@
 #include <vector>
 #include "DNL.h"
+#include "BoolExpr.h"
 
 namespace KEPLER_FORMAL {
-class BoolExpr;
 
 class MiterStrategy {
  public:
@@ -10,7 +10,9 @@ class MiterStrategy {
 
   void build();
 
-  
+  const std::vector<BoolExpr>& getPOs() const {
+    return POs_;
+  }
 
  private:
  

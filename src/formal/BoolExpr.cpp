@@ -1,4 +1,6 @@
 #include "BoolExpr.h"
+// for ostream
+#include <sstream>
 
 using namespace KEPLER_FORMAL;
 
@@ -58,4 +60,10 @@ void BoolExpr::Print(std::ostream& out) const {
             out << ")";
             break;
     }
+}
+
+std::string BoolExpr::toString() const {
+    std::ostringstream oss;
+    Print(oss);
+    return oss.str();
 }

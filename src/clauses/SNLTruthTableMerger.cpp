@@ -16,19 +16,20 @@ using namespace KEPLER_FORMAL;
 /// - The resulting TT has input count = sum(parentTT[i].size()).
 /// - If the new input‐count ≤ 6, we pack into a uint64_t mask; otherwise
 ///   we build a vector<bool> mask.
-SNLTruthTable SNLTruthTableMerger::mergeTruthTables(const std::vector<const naja::NL::SNLTruthTable*>& inputsToMerge,
+SNLTruthTable SNLTruthTableMerger::mergeTruthTables(const std::vector<const naja::NL::SNLTruthTable>& inputsToMerge,
                    const naja::NL::SNLTruthTable& base)
 {
   // 1) Sanity check
   uint32_t K = uint32_t(inputsToMerge.size());
   if (base.size() != K)
     throw std::invalid_argument(
-      "mergeTruthTables: child arity != number of inputsToMerge");
+      "mergeTruthTables: child arity != number of inputsToMerge (" + std::to_string(base.size()) +
+      " != " + std::to_string(K) + ")");
 
   // 2) Compute total new inputs = Σ parent.inputs
   uint32_t newSize = 0;
   for (auto &p : inputsToMerge) {
-    newSize += p->size();
+    newSize += p.size();
   }
 
   uint32_t Nrows = 1u << newSize;
@@ -41,13 +42,13 @@ SNLTruthTable SNLTruthTableMerger::mergeTruthTables(const std::vector<const naja
 
     // slice each parent’s bits, eval its TT
     for (uint32_t i = 0; i < K; ++i) {
-      uint32_t pSize = inputsToMerge[i]->size();
+      uint32_t pSize = inputsToMerge[i].size();
       uint32_t pIdx  = 0;
       for (uint32_t b = 0; b < pSize; ++b) {
         bool bv = ((idx >> (bitOff + b)) & 1) != 0;
         pIdx |= (uint32_t(bv) << b);
       }
-      childArgs[i] = inputsToMerge[i]->bits().bit(pIdx);
+      childArgs[i] = inputsToMerge[i].bits().bit(pIdx);
       bitOff += pSize;
     }
 
@@ -73,5 +74,6 @@ SNLTruthTable SNLTruthTableMerger::mergeTruthTables(const std::vector<const naja
   }
 
   // otherwise use vector<bool>
+  
   return SNLTruthTable(newSize, std::move(raw));
 }

@@ -5,8 +5,14 @@
 
 namespace KEPLER_FORMAL {
 
-std::shared_ptr<KEPLER_FORMAL::BoolExpr> TruthTableToBoolExpr(
+class TruthTableToBoolExpr {
+
+public:
+
+static std::shared_ptr<KEPLER_FORMAL::BoolExpr> convert(
     const naja::NL::SNLTruthTable &tt,
     const std::vector<std::string> &varNames);
+
+};
 
 }

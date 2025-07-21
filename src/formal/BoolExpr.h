@@ -18,11 +18,22 @@ public:
 
     void Print(std::ostream& out) const;
 
+    std::string toString() const;
+
     // Public constructors so std::make_shared can access them
     BoolExpr() = default;
     BoolExpr(Op op, const std::string& name);                    // variable
     BoolExpr(Op op, std::shared_ptr<BoolExpr> a);                // unary
     BoolExpr(Op op, std::shared_ptr<BoolExpr> a, std::shared_ptr<BoolExpr> b); // binary
+
+    // Create false
+    static std::shared_ptr<BoolExpr> createFalse() {
+        return Var("FALSE");
+    }
+    // Create true
+    static std::shared_ptr<BoolExpr> createTrue() {
+        return Var("TRUE");
+    }
 
 private:
     Op op_;

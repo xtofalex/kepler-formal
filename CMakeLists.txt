@@ -19,4 +19,4 @@ add_subdirectory(src)
 add_subdirectory(thirdparty)
 add_subdirectory(test)
 
-
+find_package(TBB REQUIRED)
