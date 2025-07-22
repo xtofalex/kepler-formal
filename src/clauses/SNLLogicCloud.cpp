@@ -18,10 +18,14 @@ bool SNLLogicCloud::isInput(naja::DNL::DNLID termID) {
   return std::find(PIs_.begin(), PIs_.end(), termID) != PIs_.end();
 }
 
+bool SNLLogicCloud::isOutput(naja::DNL::DNLID termID) {
+  return std::find(POs_.begin(), POs_.end(), termID) != POs_.end();
+}
+
 void SNLLogicCloud::compute() {
   std::vector<naja::DNL::DNLID> newIterationInputs;
 
-  if (dnl_.getDNLTerminalFromID(seedOutputTerm_).isTopPort()) {
+  if (dnl_.getDNLTerminalFromID(seedOutputTerm_).isTopPort() || isOutput(seedOutputTerm_)) {
     auto iso = dnl_.getDNLIsoDB().getIsoFromIsoIDconst(
         dnl_.getDNLTerminalFromID(seedOutputTerm_).getIsoID());
     if (iso.getDrivers().size() != 1) {
@@ -29,7 +33,10 @@ void SNLLogicCloud::compute() {
     }
     auto driver = iso.getDrivers().front();
     auto inst = dnl_.getDNLTerminalFromID(driver).getDNLInstance();
-    if (inst.getSNLModel() == dnl_.getTop().getSNLModel()) {
+    if (isInput(driver)) {
+      currentIterationInputs_.push_back(driver);
+      SNLTruthTable tt(1, 2);
+      table_ = tt;
       return;
     }
     DEBUG_LOG("Instance name: %s\n",
@@ -69,7 +76,7 @@ void SNLLogicCloud::compute() {
 
   bool reachedPIs = true;
   for (auto input : newIterationInputs) {
-    if (!isInput(input)) {
+    if (!isInput(input) && !isOutput(input)) {
       reachedPIs = false;
       break;
     }
@@ -91,7 +98,7 @@ void SNLLogicCloud::compute() {
 
     std::vector<const naja::NL::SNLTruthTable> inputsToMerge;
     for (auto input : currentIterationInputs_) {
-      if (isInput(input)) {
+      if (isInput(input) || isOutput(input)) {
         SNLTruthTable tt(1, 2);
         newIterationInputs.push_back(input);
         DEBUG_LOG("Adding input: %s\n",
@@ -113,12 +120,12 @@ void SNLLogicCloud::compute() {
         assert(iso.getDrivers().size() <= 1 &&
                "Iso have more than one driver, not supported");
       } else if (iso.getDrivers().empty()) {
-        assert(iso.getReaders().size() == 1 &&
+        assert(iso.getDrivers().size() == 1 &&
                "Iso have no drivers and more than one reader, not supported");
       }
 
       auto driver = iso.getDrivers().front();
-      if (isInput(driver)) {
+      if (isInput(driver) || isOutput(driver)) {
         SNLTruthTable tt(1, 2);
         newIterationInputs.push_back(driver);
         DEBUG_LOG("Adding top input: %s\n",
@@ -159,7 +166,7 @@ void SNLLogicCloud::compute() {
 
     reachedPIs = true;
     for (auto input : newIterationInputs) {
-      if (!isInput(input)) {
+      if (!isInput(input) && !isOutput(input)) {
         reachedPIs = false;
         break;
       }

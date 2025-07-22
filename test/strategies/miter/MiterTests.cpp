@@ -15,6 +15,8 @@
 #include "SNLDesignTruthTable.h"
 #include "SNLScalarNet.h"
 #include "SNLScalarTerm.h"
+#include "SNLDesign.h"
+#include "SNLDesignModeling.h"
 
 using namespace naja;
 using namespace naja::NL;
@@ -191,7 +193,7 @@ TEST_F(MiterTests, TestMiterANDNonConstant) {
       SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out"));
   auto topOut2 =
       SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out2"));
-    auto topIn1 =
+  auto topIn1 =
       SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In1"));
   auto topIn2 =
       SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In2"));
@@ -277,13 +279,145 @@ TEST_F(MiterTests, TestMiterANDNonConstant) {
     miter.build();
     for (const auto& po : miter.getPOs()) {
       std::cout << "PO: " << po.toString() << std::endl;
-    }    
+    }
     EXPECT_TRUE(miter.getPOs()[0].toString() == std::string("((3 ∧ 3) ∧ 2)"));
     EXPECT_TRUE(miter.getPOs()[1].toString() == std::string("(3 ∧ 3)"));
   }
   naja::DNL::destroy();
 }
 
+TEST_F(MiterTests, TestMiterANDNonConstantWithSequentialElements) {
+  // 1. Create SNL
+  NLUniverse* univ = NLUniverse::create();
+  NLDB* db = NLDB::create(univ);
+  NLLibrary* library =
+      NLLibrary::create(db, NLLibrary::Type::Primitives, NLName("nangate45"));
+  // 2. Create a top model with one output
+  SNLDesign* top =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("top"));
+  univ->setTopDesign(top);
+  auto topOut =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out"));
+  auto topOut2 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out2"));
+  auto topIn1 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In1"));
+  auto topIn2 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In2"));
+  NLLibraryTruthTables::construct(library);
+  // 7. create a and model
+  SNLDesign* andModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("AND"));
+
+  // add 2 inputs and 1 output to and
+  auto andIn1 =
+      SNLScalarTerm::create(andModel, SNLTerm::Direction::Input, NLName("in1"));
+  auto andIn2 =
+      SNLScalarTerm::create(andModel, SNLTerm::Direction::Input, NLName("in2"));
+  auto andOut = SNLScalarTerm::create(andModel, SNLTerm::Direction::Output,
+                                      NLName("out"));
+
+  // Create an FF
+  SNLDesign* ffModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("FF"));
+  // add D, CLK and Q
+  auto ffD =
+      SNLScalarTerm::create(ffModel, SNLTerm::Direction::Input, NLName("D"));
+  auto ffCLK =
+      SNLScalarTerm::create(ffModel, SNLTerm::Direction::Input, NLName("CLK"));
+  auto ffQ =
+      SNLScalarTerm::create(ffModel, SNLTerm::Direction::Output, NLName("Q"));
+  // Set sequential dependecies to CLK
+  SNLDesignModeling::addInputsToClockArcs({ffD}, {ffCLK});
+  SNLDesignModeling::addClockToOutputsArcs({ffCLK}, {ffQ});
+
+  // Create ff instance under top
+  SNLInstance* instFF = SNLInstance::create(top, ffModel, NLName("ff0"));
+
+  // 8. create a and instance in top
+  SNLInstance* inst3 = SNLInstance::create(top, andModel, NLName("and"));
+  SNLInstance* inst4 = SNLInstance::create(top, andModel, NLName("and2"));
+  // set truth table for and model
+  SNLDesignTruthTable::setTruthTable(andModel, SNLTruthTable(2, 8));
+  // 9. connect all instances inputs
+  SNLNet* net1 = SNLScalarNet::create(top, NLName("top_in1_net"));
+  SNLNet* net2 = SNLScalarNet::create(top, NLName("top_in2_net"));
+  SNLNet* net3 = SNLScalarNet::create(top, NLName("and_output_net"));
+  SNLNet* net4 = SNLScalarNet::create(top, NLName("and2_output_net"));
+  SNLNet* net5 = SNLScalarNet::create(top, NLName("ffD"));
+  SNLNet* net6 = SNLScalarNet::create(top, NLName("ffCLK"));
+  // connect logic0 to and
+  topIn1->setNet(net1);
+
+  inst4->getInstTerm(andIn1)->setNet(net2);
+  inst4->getInstTerm(andIn2)->setNet(net2);
+  // connect logic1 to and
+  instFF->getInstTerm(ffQ)->setNet(net2);
+   instFF->getInstTerm(ffD)->setNet(net1);
+    instFF->getInstTerm(ffCLK)->setNet(net6);
+  inst3->getInstTerm(andIn2)->setNet(net1);
+  inst3->getInstTerm(andIn1)->setNet(net4);
+  // connect the and instance output to the top output
+  inst3->getInstTerm(andOut)->setNet(net3);
+  topOut->setNet(net3);
+  inst4->getInstTerm(andOut)->setNet(net4);
+  topOut2->setNet(net4);
+  topIn1->setNet(net1);
+  topIn2->setNet(net6);
+  // 11. create DNL
+  get();
+  // 12. create a constant propagation object
+  {
+    std::string dotFileName(
+        std::string(std::string("./beforeCP") + std::string(".dot")));
+    std::string svgFileName(
+        std::string(std::string("./beforeCP") + std::string(".svg")));
+    SnlVisualiser snl(top);
+    snl.process();
+    snl.getNetlistGraph().dumpDotFile(dotFileName.c_str());
+    executeCommand(std::string(std::string("dot -Tsvg ") + dotFileName +
+                               std::string(" -o ") + svgFileName)
+                       .c_str());
+  }
+  ConstantPropagation cp;
+  // 13. collect the constants
+  // cp.collectConstants();
+  // 14. run the constant propagation
+  {
+    MiterStrategy miter;
+    miter.build();
+    for (const auto& po : miter.getPOs()) {
+      std::cout << "PO: " << po.toString() << std::endl;
+    }
+  }
+
+  cp.run();
+  // 15. check the output value of the top instance
+  {
+    std::string dotFileName(
+        std::string(std::string("./afterCP") + std::string(".dot")));
+    std::string svgFileName(
+        std::string(std::string("./afterCP") + std::string(".svg")));
+    SnlVisualiser snl(top);
+    snl.process();
+    snl.getNetlistGraph().dumpDotFile(dotFileName.c_str());
+    executeCommand(std::string(std::string("dot -Tsvg ") + dotFileName +
+                               std::string(" -o ") + svgFileName)
+                       .c_str());
+  }
+  {
+    MiterStrategy miter;
+    miter.build();
+    for (const auto& po : miter.getPOs()) {
+      std::cout << "PO: " << po.toString() << std::endl;
+    }
+    EXPECT_TRUE(miter.getPOs()[0].toString() == std::string("((6 ∧ 6) ∧ 2)"));
+    EXPECT_TRUE(miter.getPOs()[1].toString() == std::string("(6 ∧ 6)"));
+    EXPECT_TRUE(miter.getPOs()[2].toString() == std::string("2"));
+    EXPECT_TRUE(miter.getPOs()[3].toString() == std::string("3"));
+  }
+  naja::DNL::destroy();
+}
 
 // Required main function for Google Test
 int main(int argc, char** argv) {

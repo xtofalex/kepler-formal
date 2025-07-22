@@ -34,8 +34,8 @@ std::vector<DNLID> MiterStrategy::collectInputs() {
   for (DNLID leaf : dnl->getLeaves()) {
     DNLInstanceFull instance = dnl->getDNLInstanceFromID(leaf);
     size_t numberOfInputs = 0, numberOfOutputs = 0;
-    for (DNLID termId = top.getTermIndexes().first;
-         termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+    for (DNLID termId = instance.getTermIndexes().first;
+         termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
          termId++) {
       const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
       if (term.getSnlBitTerm()->getDirection() != SNLBitTerm::Direction::Output)
@@ -45,8 +45,8 @@ std::vector<DNLID> MiterStrategy::collectInputs() {
     }
 
     if (numberOfInputs == 0 && numberOfOutputs > 1) {
-      for (DNLID termId = top.getTermIndexes().first;
-           termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+      for (DNLID termId = instance.getTermIndexes().first;
+           termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
            termId++) {
         const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
         if (term.getSnlBitTerm()->getDirection() != SNLBitTerm::Direction::Input)
@@ -57,8 +57,8 @@ std::vector<DNLID> MiterStrategy::collectInputs() {
 
     bool isSequential = false;
     std::vector<SNLBitTerm*> seqBitTerms;
-    for (DNLID termId = top.getTermIndexes().first;
-         termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+    for (DNLID termId = instance.getTermIndexes().first;
+         termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
          termId++) {
       const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
       auto related = SNLDesignModeling::getClockRelatedOutputs(term.getSnlBitTerm());
@@ -73,8 +73,8 @@ std::vector<DNLID> MiterStrategy::collectInputs() {
 
     if (!isSequential) continue;
 
-    for (DNLID termId = top.getTermIndexes().first;
-         termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+    for (DNLID termId = instance.getTermIndexes().first;
+         termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
          termId++) {
       const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
       if (std::find(seqBitTerms.begin(), seqBitTerms.end(), term.getSnlBitTerm()) != seqBitTerms.end())
@@ -106,8 +106,8 @@ std::vector<DNLID> MiterStrategy::collectOutputs() {
     bool isSequential = false;
     std::vector<SNLBitTerm*> seqBitTerms;
 
-    for (DNLID termId = top.getTermIndexes().first;
-         termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+    for (DNLID termId = instance.getTermIndexes().first;
+         termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
          termId++) {
       const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
       auto related = SNLDesignModeling::getClockRelatedInputs(term.getSnlBitTerm());
@@ -122,8 +122,8 @@ std::vector<DNLID> MiterStrategy::collectOutputs() {
 
     if (!isSequential) continue;
 
-    for (DNLID termId = top.getTermIndexes().first;
-         termId != DNLID_MAX && termId <= top.getTermIndexes().second;
+    for (DNLID termId = instance.getTermIndexes().first;
+         termId != DNLID_MAX && termId <= instance.getTermIndexes().second;
          termId++) {
       const DNLTerminalFull& term = dnl->getDNLTerminalFromID(termId);
       if (std::find(seqBitTerms.begin(), seqBitTerms.end(), term.getSnlBitTerm()) != seqBitTerms.end())
@@ -141,7 +141,7 @@ void MiterStrategy::build() {
   outputs_ = collectOutputs();
 
   for (auto out : outputs_) {
-    SNLLogicCloud cloud(out, inputs_);
+    SNLLogicCloud cloud(out, inputs_, outputs_);
     cloud.compute();
 
     std::vector<std::string> varNames;
