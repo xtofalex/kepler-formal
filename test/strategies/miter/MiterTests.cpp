@@ -277,10 +277,13 @@ TEST_F(MiterTests, TestMiterANDNonConstant) {
     miter.build();
     for (const auto& po : miter.getPOs()) {
       std::cout << "PO: " << po.toString() << std::endl;
-    }
+    }    
+    EXPECT_TRUE(miter.getPOs()[0].toString() == std::string("((3 ∧ 3) ∧ 2)"));
+    EXPECT_TRUE(miter.getPOs()[1].toString() == std::string("(3 ∧ 3)"));
   }
   naja::DNL::destroy();
 }
+
 
 // Required main function for Google Test
 int main(int argc, char** argv) {
