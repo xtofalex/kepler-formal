@@ -24,6 +24,8 @@ jobs:
       with:
         submodules: true
     # install dependencies
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
     - name: Install boost & capnproto
       run: sudo apt-get update && sudo apt-get install -yq libboost-dev libfl-dev capnproto libcapnp-dev ninja-build clang libtbb-dev
       
