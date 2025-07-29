@@ -1,4 +1,5 @@
 #include "SimpleSatSolver.h"
+#include <algorithm>
 
 using namespace KEPLER_FORMAL;
 
