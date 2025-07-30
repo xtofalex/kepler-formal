@@ -53,6 +53,7 @@ class MiterTests : public ::testing::Test {
     // before the destructor).
     // Destroy the SNL
     NLUniverse::get()->destroy();
+    naja::DNL::destroy();
   }
 };
 
@@ -616,6 +617,105 @@ TEST_F(MiterTests, TestMiterANDNonConstantWithSequentialElementsFormal) {
                             .c_str());
 
         }
+}
+
+// 1. create a circuit of 2 inputs that drives and AND gate that drives top output
+// 2. clone the the top and chain an inverter to the AND output
+// 3. verify that the miter strategy detects the difference
+TEST_F(MiterTests, TestMiterAndWithChainedInverter) {
+  // 1. Create SNL
+  NLUniverse* univ = NLUniverse::create();
+  NLDB* db = NLDB::create(univ);
+  NLLibrary* library =
+      NLLibrary::create(db, NLLibrary::Type::Primitives, NLName("nangate45"));
+  NLLibrary* libraryDesigns =
+      NLLibrary::create(db, NLLibrary::Type::Standard, NLName("designs"));
+  // 2. Create a top model with one output
+  SNLDesign* top = SNLDesign::create(libraryDesigns, SNLDesign::Type::Standard,
+                                     NLName("top"));
+  univ->setTopDesign(top);
+  auto topOut =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out"));
+  auto topIn1 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In1"));
+  auto topIn2 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("In2"));
+  NLLibraryTruthTables::construct(library);
+  // 7. create a and model
+  SNLDesign* andModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("AND"));
+
+  // add 2 inputs and 1 output to and
+  auto andIn1 =
+      SNLScalarTerm::create(andModel, SNLTerm::Direction::Input, NLName("in1"));
+  auto andIn2 =
+      SNLScalarTerm::create(andModel, SNLTerm::Direction::Input, NLName("in2"));
+  auto andOut = SNLScalarTerm::create(andModel, SNLTerm::Direction::Output,
+                                      NLName("out"));
+
+  // set truth table for and model
+  SNLDesignTruthTable::setTruthTable(andModel, SNLTruthTable(2, 8));
+  // 8. create an inverter model
+  SNLDesign* inverterModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("INV"));
+  // set truth table for inverter model
+  auto invIn =
+      SNLScalarTerm::create(inverterModel, SNLTerm::Direction::Input, NLName("in"));
+  auto invOut =
+      SNLScalarTerm::create(inverterModel, SNLTerm::Direction::Output, NLName("out"));
+  SNLDesignTruthTable::setTruthTable(inverterModel, SNLTruthTable(1, 1));
+
+  // create and instance in top
+  SNLInstance* instAnd = SNLInstance::create(top, andModel, NLName("and"));
+
+  // connect inputs to the and instance
+  SNLNet* net1 = SNLScalarNet::create(top, NLName("top_in1_net"));
+  SNLNet* net2 = SNLScalarNet::create(top, NLName("top_in2_net"));
+  SNLNet* net3 = SNLScalarNet::create(top, NLName("and_output_net"));
+  // connect inputs to the top instance
+  topIn1->setNet(net1);
+  topIn2->setNet(net2);
+  // connect the and instance inputs
+  instAnd->getInstTerm(andIn1)->setNet(net1);
+  instAnd->getInstTerm(andIn2)->setNet(net2);
+  // connect the and instance output to the top output
+  instAnd->getInstTerm(andOut)->setNet(net3);
+  topOut->setNet(net3);
+
+  // clone the top design
+  SNLDesign* topClone = top->clone(NLName("topClone"));
+  // create an inverter instance in the clone
+  SNLInstance* instInv = SNLInstance::create(top, inverterModel, NLName("inv"));
+  // connect the inverter input to the and output
+  SNLNet* net4 = SNLScalarNet::create(top, NLName("and_output_net_clone"));
+  instAnd->getInstTerm(andOut)->setNet(net4);
+  instInv->getInstTerm(invIn)->setNet(net4);
+  // connect the inverter output to the top output
+  SNLNet* net5 = SNLScalarNet::create(top, NLName("top_output_net_clone"));
+  instInv->getInstTerm(invOut)->setNet(net5);
+  topOut->setNet(net5);
+
+  // test the miter strategy
+  {
+    MiterStrategy MiterS(top, topClone);
+    EXPECT_FALSE(MiterS.run());
+  }
+
+  // chain another inverter to the first inverter
+  SNLInstance* instInv2 = SNLInstance::create(top, inverterModel, NLName("inv2"));
+  // connect the second inverter input to the first inverter output
+  SNLNet* net6 = SNLScalarNet::create(top, NLName("inv_output_net_clone"));
+  instInv->getInstTerm(invOut)->setNet(net6);
+  instInv2->getInstTerm(invIn)->setNet(net6);
+  // connect the second inverter output to the top output
+  SNLNet* net7 = SNLScalarNet::create(top, NLName("top_output_net_clone2"));
+  instInv2->getInstTerm(invOut)->setNet(net7);
+  topOut->setNet(net7);
+  // test the miter strategy again
+  {
+    MiterStrategy MiterS(top, topClone);
+    EXPECT_TRUE(MiterS.run());
+  }
 }
 
 // Required main function for Google Test

@@ -119,13 +119,13 @@ bool MiterStrategy::run() {
   // build both sets of POs
   SNLDesign* topInit = NLUniverse::get()->getTopDesign();
   NLUniverse* univ = NLUniverse::get();
-
+  naja::DNL::destroy();
   univ->setTopDesign(top0_);
   builder.build();
   auto POs0 = builder.getPOs();
   auto inputs2inputsIDs0 = builder.getInputs2InputsIDs();
   auto outputs2outputsIDs0 = builder.getOutputs2OutputsIDs();
-
+  naja::DNL::destroy();
   univ->setTopDesign(top1_);
   builder.build();
   auto POs1 = builder.getPOs();
