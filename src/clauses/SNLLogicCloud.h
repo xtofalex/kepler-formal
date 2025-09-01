@@ -8,8 +8,16 @@ class SNLLogicCloud {
   SNLLogicCloud(naja::DNL::DNLID seedOutputTerm, 
                 const std::vector<naja::DNL::DNLID>& PIs, 
                 const std::vector<naja::DNL::DNLID>& POs)
-      : seedOutputTerm_(seedOutputTerm), dnl_(*naja::DNL::get()), 
-      PIs_(PIs.begin(), PIs.end()), POs_(POs.begin(), POs.end()) {}
+      : seedOutputTerm_(seedOutputTerm), dnl_(*naja::DNL::get()) {
+        PIs_ = std::vector<bool>(naja::DNL::get()->getNBterms(), false);
+        for (auto pi : PIs) {
+          PIs_[pi] = true;
+        }
+        POs_ = std::vector<bool>(naja::DNL::get()->getNBterms(), false);
+        for (auto po : POs) {
+          POs_[po] = true;
+        }
+      }
   void compute();
   bool isInput(naja::DNL::DNLID inputTerm);
   bool isOutput(naja::DNL::DNLID inputTerm);
@@ -21,8 +29,8 @@ class SNLLogicCloud {
   std::vector<naja::DNL::DNLID> currentIterationInputs_;
   SNLTruthTableTree table_;
   const naja::DNL::DNLFull& dnl_;
-  const std::set<naja::DNL::DNLID> PIs_;
-  const std::set<naja::DNL::DNLID> POs_;
+  std::vector<bool> PIs_;
+  std::vector<bool> POs_;
 };
 
 }  // namespace KEPLER_FORMAL
