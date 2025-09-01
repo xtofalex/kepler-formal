@@ -130,16 +130,15 @@ void SNLTruthTableTree::updateBorderLeaves()
         auto f = stk.back();
         stk.pop_back();
 
-        if (auto inp = dynamic_cast<InputNode*>(f.node)) {
-            borderLeaves_.push_back(
-              { f.parent, f.childPos, inp->inputIndex }
-            );
-        }
-        else if (auto tbl = dynamic_cast<TableNode*>(f.node)) {
+        if (auto tbl = dynamic_cast<TableNode*>(f.node)) {
             for (size_t i = tbl->children.size(); i-- > 0; ) {
                 stk.push_back({ tbl, i, tbl->children[i].get() });
             }
-        }
+        } else if (auto inp = dynamic_cast<InputNode*>(f.node)) {
+            borderLeaves_.push_back(
+              { f.parent, f.childPos, inp->inputIndex }
+            );
+        } 
     }
 
     std::sort(borderLeaves_.begin(),
