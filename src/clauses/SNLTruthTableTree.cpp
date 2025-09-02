@@ -45,7 +45,6 @@ SNLTruthTableTree::SNLTruthTableTree()
 SNLTruthTableTree::SNLTruthTableTree(SNLTruthTable table) {
   // create table‐node root with inputleaves [0..arity−1]
   uint32_t arity = table.size();
-  printf("table size=%u\n", arity);
   auto node = std::make_unique<Node>(std::move(table));
   for (uint32_t i = 0; i < arity; ++i)
     node->addChild(std::make_unique<Node>(i));
@@ -184,7 +183,6 @@ void SNLTruthTableTree::concatFull(std::vector<SNLTruthTable> tables) {
     concatBody(i, std::move(tables[i]));
     newInputs += (((int) tables[i].size()) - 1);
   }
-  printf("After concatFull, new input count = %zu\n", newInputs);
   numExternalInputs_ = (size_t) newInputs;
   updateBorderLeaves();
 }
