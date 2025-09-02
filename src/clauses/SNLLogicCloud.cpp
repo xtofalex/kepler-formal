@@ -3,7 +3,7 @@
 #include "SNLTruthTableMerger.h"
 #include <cassert>
 
-#define DEBUG_PRINTS
+//#define DEBUG_PRINTS
 
 #ifdef DEBUG_PRINTS
 #define DEBUG_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__)
@@ -106,7 +106,7 @@ void SNLLogicCloud::compute() {
     //DEBUG_LOG("Truth table: %s\n", table_.getString().c_str());
     //printf("Truth table size: %zu\n", table_.size());
     //printf("Current iteration inputs size: %zu\n", currentIterationInputs_.size());
-    printf("table size: %zu, currentIterationInputs_ size: %zu\n", table_.size(), currentIterationInputs_.size());
+    DEBUG_LOG("table size: %zu, currentIterationInputs_ size: %zu\n", table_.size(), currentIterationInputs_.size());
     assert(currentIterationInputs_.size() == table_.size());
 
     std::vector<naja::NL::SNLTruthTable> inputsToMerge;

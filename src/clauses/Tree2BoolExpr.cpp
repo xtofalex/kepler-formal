@@ -81,7 +81,6 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
                 // Input leaf
                 // (no need for a visited pass)
                 size_t idx = node->inputIndex;
-                printf("Leaf inputIndex=%zu\n", idx);
                 memo[node] = BoolExpr::Var(varNames[idx]);
             }
         }
