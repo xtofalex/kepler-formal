@@ -96,7 +96,7 @@ void SNLLogicCloud::compute() {
   while (!reachedPIs) {
     DEBUG_LOG("---iter---\n");
     DEBUG_LOG("Current iteration inputs: %lu\n", newIterationInputs.size());
-    printf("term %lu: newIterationInputs size: %zu\n", seedOutputTerm_, newIterationInputs.size());
+    //printf("term %lu: newIterationInputs size: %zu\n", seedOutputTerm_, newIterationInputs.size());
     currentIterationInputs_ = newIterationInputs;
     for (auto input : currentIterationInputs_) {
       DEBUG_LOG("Input: %s\n",
@@ -152,8 +152,8 @@ void SNLLogicCloud::compute() {
       if (!SNLDesignModeling::getTruthTable(inst.getSNLModel(),
         dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getID()).isInitialized())
       {
-        printf("#####Truth table for instance %s is not initialized\n",
-                  inst.getSNLModel()->getName().getString().c_str());
+        //printf("#####Truth table for instance %s is not initialized\n",
+        //          inst.getSNLModel()->getName().getString().c_str());
         assert(SNLDesignModeling::getTruthTable(inst.getSNLModel(),
           dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getID()).isInitialized() &&
              "Truth table for instance is not initialized");
