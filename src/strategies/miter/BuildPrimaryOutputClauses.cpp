@@ -183,11 +183,8 @@ void BuildPrimaryOutputClauses::build() {
   sortOutputs();
   size_t processedOutputs = 0;
   tbb::task_arena arena(tbb::task_arena::automatic);
-  tbb::parallel_for(tbb::blocked_range<DNLID>(0, outputs_.size()),
-                    [&](const tbb::blocked_range<DNLID>& r) {
-                      for (DNLID i = r.begin(); i < r.end(); ++i) {
-                        auto out = outputs_[i];
-                        printf("Procssing output %zu/%zu: %s\n",
+  auto processOutput = [&](DNLID out) {
+    printf("Procssing output %zu/%zu: %s\n",
                                ++processedOutputs, outputs_.size(),
                                get()
                                    ->getDNLTerminalFromID(out)
@@ -210,8 +207,20 @@ void BuildPrimaryOutputClauses::build() {
                             cloud.getTruthTable(), varNames);
                         POs_.push_back(Tree2BoolExpr::convert(
                             cloud.getTruthTable(), varNames));
-                      }
-                    });
+                      };
+  if (getenv("KEPLER_NO_MT")) {
+    for (DNLID i = 0; i < outputs_.size(); ++i) {
+      auto out = outputs_[i];
+      processOutput(out);
+    }
+  } else {
+    tbb::parallel_for(tbb::blocked_range<DNLID>(0, outputs_.size()),
+                      [&](const tbb::blocked_range<DNLID>& r) {
+                        for (DNLID i = r.begin(); i < r.end(); ++i) {
+                          auto out = outputs_[i];
+                          processOutput(out);
+                      }});
+  }
   destroy();  // Clean up DNL instance
 }
 
