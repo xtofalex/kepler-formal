@@ -52,8 +52,8 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
     // We're now indexing into the unified Node
     using NodeKey = const SNLTruthTableTree::Node*;
 
-    std::unordered_map<NodeKey,std::shared_ptr<BoolExpr>> memo;
-    NodeKey root = tree.getRoot();
+    std::unordered_map<size_t,std::shared_ptr<BoolExpr>> memo;
+    const SNLTruthTableTree::Node* root = tree.getRoot();
 
     // manual post‐order traversal stack of (node, visited?)
     std::vector<std::pair<NodeKey,bool>> stack;
@@ -65,7 +65,7 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
         stack.pop_back();
 
         // if we already computed it, skip
-        if (memo.count(node))
+        if (memo.count(node->nodeID))
             continue;
 
         // first time we see this node?
@@ -81,7 +81,7 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
                 // Input leaf
                 // (no need for a visited pass)
                 size_t idx = node->inputIndex;
-                memo[node] = BoolExpr::Var(varNames[idx]);
+                memo[node->nodeID] = BoolExpr::Var(varNames[idx]);
             }
         }
         else {
@@ -93,16 +93,16 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
 
             // constant‐table shortcuts
             if (tbl.all0()) {
-                memo[node] = BoolExpr::createFalse();
+                memo[node->nodeID] = BoolExpr::createFalse();
             }
             else if (tbl.all1()) {
-                memo[node] = BoolExpr::createTrue();
+                memo[node->nodeID] = BoolExpr::createTrue();
             }
             else {
                 // gather child expressions
                 std::vector<std::shared_ptr<BoolExpr>> childF(k);
                 for (uint32_t i = 0; i < k; ++i) {
-                    childF[i] = memo.at(node->children[i].get());
+                    childF[i] = memo.at(node->children[i].get()->nodeID);
                 }
 
                 // build DNF: one conjunction per true‐row
@@ -124,11 +124,11 @@ KEPLER_FORMAL::Tree2BoolExpr::convert(
                     }
                     terms.push_back(mkAnd(lits));
                 }
-                memo[node] = mkOr(terms);
+                memo[node->nodeID] = mkOr(terms);
             }
         }
     }
 
     // root’s expression must be in memo
-    return memo.at(root);
+    return memo.at(root->nodeID);
 }

@@ -17,16 +17,26 @@ public:
     // for Input
     size_t inputIndex = 0;
 
+    size_t nodeID = 0; // for debug
+
+    SNLTruthTableTree* tree = nullptr;
+
     // for Table
     naja::NL::SNLTruthTable table;
     std::vector<std::unique_ptr<Node>> children;
 
     // constructors
-    explicit Node(size_t idx)
-      : type(Type::Input), inputIndex(idx) {}
+    explicit Node(size_t idx, SNLTruthTableTree* tree = nullptr /*for testing*/)
+      : type(Type::Input), inputIndex(idx), tree(tree) {
+        nodeID = tree->lastID_;
+        tree->lastID_++;
+      }
 
-    explicit Node(naja::NL::SNLTruthTable tt)
-      : type(Type::Table), table(std::move(tt)) {}
+    explicit Node(naja::NL::SNLTruthTable tt, SNLTruthTableTree* tree = nullptr /*for testing*/)
+      : type(Type::Table), table(std::move(tt)), tree(tree) {
+        nodeID = tree->lastID_;
+        tree->lastID_++;
+      }
 
     // evaluate recursively
     bool eval(const std::vector<bool>& extInputs) const;
@@ -34,6 +44,10 @@ public:
     // only valid if type==Table
     void addChild(std::unique_ptr<Node> child) {
       children.push_back(std::move(child));
+    }
+
+    SNLTruthTableTree* getTree() {
+      return nullptr;
     }
   };
 
@@ -78,6 +92,7 @@ private:
   std::unique_ptr<Node>   root_;
   size_t                  numExternalInputs_ = 0;
   std::vector<BorderLeaf> borderLeaves_;
+  size_t lastID_ = 0; // for debug
 };
 
 } // namespace KEPLER_FORMAL

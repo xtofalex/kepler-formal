@@ -45,9 +45,9 @@ SNLTruthTableTree::SNLTruthTableTree()
 SNLTruthTableTree::SNLTruthTableTree(SNLTruthTable table) {
   // create table‐node root with inputleaves [0..arity−1]
   uint32_t arity = table.size();
-  auto node = std::make_unique<Node>(std::move(table));
+  auto node = std::make_unique<Node>(std::move(table), this);
   for (uint32_t i = 0; i < arity; ++i)
-    node->addChild(std::make_unique<Node>(i));
+    node->addChild(std::make_unique<Node>(i, this));
   root_ = std::move(node);
   numExternalInputs_ = arity;
   updateBorderLeaves();
@@ -137,7 +137,7 @@ void SNLTruthTableTree::concatBody(size_t borderIndex,
 
     // 3) create the new Table‐node
     uint32_t arity = table.size();  
-    auto newNode = std::make_unique<Node>(std::move(table));
+    auto newNode = std::make_unique<Node>(std::move(table), this);
 
     // 4) only if arity>0 do we re‐use the old leaf + add new inputs
     if (arity > 0) {
@@ -147,7 +147,7 @@ void SNLTruthTableTree::concatBody(size_t borderIndex,
         // children 1…arity-1 = fresh Input leaves
         for (uint32_t i = 1; i < arity; ++i) {
             newNode->addChild(
-                std::make_unique<Node>(numExternalInputs_ + (i - 1))
+                std::make_unique<Node>(numExternalInputs_ + (i - 1), this)
             );
         }
     }
