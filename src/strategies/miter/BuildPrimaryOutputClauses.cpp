@@ -182,7 +182,7 @@ void BuildPrimaryOutputClauses::build() {
   outputs_ = collectOutputs();
   sortOutputs();
   size_t processedOutputs = 0;
-  tbb::task_arena arena(tbb::task_arena::automatic);
+  tbb::task_arena arena(20);
   auto processOutput = [&](DNLID out) {
     printf("Procssing output %zu/%zu: %s\n",
                                ++processedOutputs, outputs_.size(),
@@ -203,10 +203,12 @@ void BuildPrimaryOutputClauses::build() {
                         assert(cloud.getTruthTable().isInitialized());
                         //DEBUG_LOG("Truth Table: %s\n",
                         //          cloud.getTruthTable().print().c_str());
-                        std::shared_ptr<BoolExpr> expr = Tree2BoolExpr::convert(
-                            cloud.getTruthTable(), varNames);
+                        /*std::shared_ptr<BoolExpr> expr = Tree2BoolExpr::convert(
+                            cloud.getTruthTable(), varNames);*/
+                        
                         POs_.push_back(Tree2BoolExpr::convert(
                             cloud.getTruthTable(), varNames));
+                        //printf("size of expr: %lu\n", POs_.back()->size());
                       };
   if (getenv("KEPLER_NO_MT")) {
     for (DNLID i = 0; i < outputs_.size(); ++i) {

@@ -5,94 +5,98 @@
 #include <vector>
 #include <memory>
 #include <cstddef>
+#include "DNL.h"
+#include "SNLDesignModeling.h"
 
 namespace KEPLER_FORMAL {
 
 class SNLTruthTableTree {
 public:
-  /// A unified node: either an Input leaf or a Table internal node.
-  struct Node {
-    enum class Type { Input, Table } type;
+  struct Node 
+    : public std::enable_shared_from_this<Node>   // enable shared_from_this
+  {
+    enum class Type { Input, Table, P } type;
 
     // for Input
-    size_t inputIndex = 0;
+    size_t inputIndex = (size_t)-1;
 
-    size_t nodeID = 0; // for debug
-
+    // debug
+    size_t nodeID = 0;       
     SNLTruthTableTree* tree = nullptr;
 
-    // for Table
-    naja::NL::SNLTruthTable table;
-    std::vector<std::unique_ptr<Node>> children;
+    // for Table nodes
+    naja::DNL::DNLID dnlid    = naja::DNL::DNLID_MAX;
+    naja::DNL::DNLID termid   = naja::DNL::DNLID_MAX;
+    std::vector<std::shared_ptr<Node>> children;
 
-    // constructors
-    explicit Node(size_t idx, SNLTruthTableTree* tree = nullptr /*for testing*/)
-      : type(Type::Input), inputIndex(idx), tree(tree) {
-        nodeID = tree->lastID_;
-        tree->lastID_++;
-      }
+    // parent pointer as weak_ptr to break cycles
+    std::weak_ptr<Node> parent;     
 
-    explicit Node(naja::NL::SNLTruthTable tt, SNLTruthTableTree* tree = nullptr /*for testing*/)
-      : type(Type::Table), table(std::move(tt)), tree(tree) {
-        nodeID = tree->lastID_;
-        tree->lastID_++;
-      }
+    //--- ctors
+    explicit Node(SNLTruthTableTree* t)                   // Type::P
+      : type(Type::P), tree(t) {
+      nodeID = tree->lastID_++;
+    }
+
+    explicit Node(size_t idx, SNLTruthTableTree* t)       // Type::Input
+      : type(Type::Input), inputIndex(idx), tree(t) {
+      nodeID = tree->lastID_++;
+    }
+
+    Node(SNLTruthTableTree* t, 
+         naja::DNL::DNLID i, 
+         naja::DNL::DNLID term)                          // Type::Table
+      : type(Type::Table), tree(t), dnlid(i), termid(term) 
+    {
+      assert(i != naja::DNL::DNLID_MAX && term != naja::DNL::DNLID_MAX);
+      nodeID = tree->lastID_++;
+    }
 
     // evaluate recursively
     bool eval(const std::vector<bool>& extInputs) const;
 
-    // only valid if type==Table
-    void addChild(std::unique_ptr<Node> child) {
-      children.push_back(std::move(child));
-    }
+    // add a child, detect cycles, set child's parent
+    void addChild(std::shared_ptr<Node> child);
 
-    SNLTruthTableTree* getTree() {
-      return nullptr;
-    }
+    // get the table, only valid for Table and P nodes
+    SNLTruthTable getTruthTable() const;
   };
 
-  // build an empty tree
+  //--- public API
   SNLTruthTableTree();
+  SNLTruthTableTree(Node::Type type);
+  SNLTruthTableTree(naja::DNL::DNLID instid, naja::DNL::DNLID termid);
 
-  // single-table root
-  SNLTruthTableTree(naja::NL::SNLTruthTable table);
-
-  // wrap an existing root
-  SNLTruthTableTree(std::unique_ptr<Node> root, size_t numExternalInputs);
-
-  // number of external inputs
   size_t size() const;
-
-  // evaluate the whole tree
   bool eval(const std::vector<bool>& extInputs) const;
 
-  // graft a single table at the given leaf‐slot or external index
-  void concat(size_t borderIndex, naja::NL::SNLTruthTable table);
+  void concat(size_t borderIndex,
+              naja::DNL::DNLID instid,
+              naja::DNL::DNLID termid);
 
-  // graft a batch of tables onto the first N border‐leaves
-  void concatFull(std::vector<naja::NL::SNLTruthTable> tables);
+  void concatFull(const std::vector<std::pair<naja::DNL::DNLID,
+                                             naja::DNL::DNLID>>& tables);
 
-  // access to the root node
   const Node* getRoot() const { return root_.get(); }
-
   bool isInitialized() const;
   void print() const;
 
 private:
-  // describe a free leaf in the tree
   struct BorderLeaf {
     Node*  parent;    // nullptr if root
-    size_t childPos;  // position within parent->children
-    size_t extIndex;  // external‐input index
+    size_t childPos;  
+    size_t extIndex;  
   };
 
   void updateBorderLeaves();
-  void concatBody(size_t borderIndex, naja::NL::SNLTruthTable table);
+  const Node& concatBody(size_t borderIndex,
+                         naja::DNL::DNLID instid,
+                         naja::DNL::DNLID termid);
 
-  std::unique_ptr<Node>   root_;
+  std::shared_ptr<Node>   root_;
   size_t                  numExternalInputs_ = 0;
   std::vector<BorderLeaf> borderLeaves_;
-  size_t lastID_ = 0; // for debug
+  size_t                  lastID_ = 2;       // for debug
 };
 
 } // namespace KEPLER_FORMAL
