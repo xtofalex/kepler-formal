@@ -32,8 +32,8 @@ void SNLTruthTableTree::Node::addChild(std::shared_ptr<Node> child) {
 //----------------------------------------------------------------------
 SNLTruthTable SNLTruthTableTree::Node::getTruthTable() const {
   if (type == Type::Table) {
-    return SNLDesignModeling::getTruthTable(
-      naja::DNL::get()->getDNLInstanceFromID(dnlid).getSNLModel(),
+    auto* model = const_cast<SNLDesign*>(naja::DNL::get()->getDNLInstanceFromID(dnlid).getSNLModel());
+    return model->getTruthTable(
       naja::DNL::get()->getDNLTerminalFromID(termid)
                    .getSnlBitTerm()->getOrderID());
   }
@@ -87,8 +87,8 @@ SNLTruthTableTree::SNLTruthTableTree(Node::Type type) {
 SNLTruthTableTree::SNLTruthTableTree(naja::DNL::DNLID instid,
                                      naja::DNL::DNLID termid)
 {
-  auto table = SNLDesignModeling::getTruthTable(
-    naja::DNL::get()->getDNLInstanceFromID(instid).getSNLModel(),
+  auto* model = const_cast<SNLDesign*>(naja::DNL::get()->getDNLInstanceFromID(instid).getSNLModel());
+  const auto& table = model->getTruthTable(
     naja::DNL::get()->getDNLTerminalFromID(termid)
                  .getSnlBitTerm()->getOrderID());
 
@@ -177,8 +177,8 @@ SNLTruthTableTree::concatBody(size_t borderIndex,
   uint32_t arity=0;
   std::shared_ptr<Node> newNode;
   if (instid!=naja::DNL::DNLID_MAX && termid!=naja::DNL::DNLID_MAX) {
-    auto tbl = SNLDesignModeling::getTruthTable(
-      naja::DNL::get()->getDNLInstanceFromID(instid).getSNLModel(),
+    auto* model = const_cast<SNLDesign*>(naja::DNL::get()->getDNLInstanceFromID(instid).getSNLModel());
+    const auto& tbl = model->getTruthTable(
       naja::DNL::get()->getDNLTerminalFromID(termid)
                    .getSnlBitTerm()->getOrderID());
     arity = tbl.size();

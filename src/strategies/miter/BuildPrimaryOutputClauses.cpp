@@ -82,7 +82,7 @@ std::vector<DNLID> BuildPrimaryOutputClauses::collectInputs() {
             SNLBitTerm::Direction::Input) {
           auto deps = SNLDesignModeling::getCombinatorialInputs(
               term.getSnlBitTerm());
-          if (deps.empty()) {
+          if (deps.empty() || !(term.getSnlBitTerm()->getDesign()->getTruthTable(term.getSnlBitTerm()->getOrderID()).isInitialized())) {
             inputs.push_back(termId);
             DEBUG_LOG("Collecting input %s of model %s\n",
                       term.getSnlBitTerm()->getName().getString().c_str(), 
@@ -148,7 +148,32 @@ std::vector<DNLID> BuildPrimaryOutputClauses::collectOutputs() {
         if (term.getSnlBitTerm()->getDirection() != SNLBitTerm::Direction::Output) {
           auto deps = SNLDesignModeling::getCombinatorialOutputs(
               term.getSnlBitTerm());
-          if (deps.empty()) {
+          // Collect all tt on the model
+          std::vector<SNLTruthTable> tts;
+          for (DNLID tId = instance.getTermIndexes().first;
+               tId != DNLID_MAX && tId <= instance.getTermIndexes().second;
+               tId++) {
+            const DNLTerminalFull& tTerm = dnl->getDNLTerminalFromID(tId);
+            // If direction is input, skip
+            if (tTerm.getSnlBitTerm()->getDirection() ==
+                SNLBitTerm::Direction::Input) {
+              continue;
+            }
+            auto tt = tTerm.getSnlBitTerm()->getDesign()->getTruthTable(tTerm.getSnlBitTerm()->getOrderID());
+            if (tt.isInitialized()) {
+              tts.push_back(tt);
+            }
+          }
+          bool termInTTDeps = false;
+          for (const auto& tt : tts) {
+            auto ttDeps = tt.getDependencies();
+            if (std::find(ttDeps.begin(), ttDeps.end(), term.getSnlBitTerm()->getOrderID()) !=
+                ttDeps.end()) {
+              termInTTDeps = true;
+              break;
+            }
+          }
+          if (deps.empty() || !termInTTDeps) {
             outputs.push_back(termId);
             DEBUG_LOG("Collecting output %s of model %s\n",
                       term.getSnlBitTerm()->getName().getString().c_str(), 

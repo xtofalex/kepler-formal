@@ -50,8 +50,9 @@ void SNLLogicCloud::compute() {
     DEBUG_LOG("model name: %s\n",
               inst.getSNLModel()->getName().getString().c_str());
     table_ = SNLTruthTableTree(inst.getID(), driver);
-    assert(SNLDesignModeling::getTruthTable(inst.getSNLModel(),
-        dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getID()).isInitialized() &&
+    auto* model = const_cast<SNLDesign*>(inst.getSNLModel());
+    assert(model->getTruthTable(
+        dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getOrderID()).isInitialized() &&
            "Truth table is not initialized");
     assert(table_.isInitialized() &&
            "Truth table for seed output term is not initialized");
@@ -147,13 +148,17 @@ void SNLLogicCloud::compute() {
 
       auto inst = dnl_.getDNLInstanceFromID(
           dnl_.getDNLTerminalFromID(driver).getDNLInstance().getID());
-      if (!SNLDesignModeling::getTruthTable(inst.getSNLModel(),
-        dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getID()).isInitialized())
+      auto* model = const_cast<SNLDesign*>(inst.getSNLModel());
+      if (!model->getTruthTable(
+        dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getOrderID()).isInitialized())
       {
         //printf("#####Truth table for instance %s is not initialized\n",
         //          inst.getSNLModel()->getName().getString().c_str());
-        assert(SNLDesignModeling::getTruthTable(inst.getSNLModel(),
-          dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getID()).isInitialized() &&
+        printf("#####Truth table for instance %s is not initialized\n",
+                  inst.getSNLInstance()->getModel()->getName().getString().c_str());
+        auto* model = const_cast<SNLDesign*>(inst.getSNLModel());
+        assert(model->getTruthTable(
+        dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getOrderID()).isInitialized() &&
              "Truth table for instance is not initialized");
       }
       

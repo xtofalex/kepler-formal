@@ -110,9 +110,54 @@ std::shared_ptr<BoolExpr> BoolExpr::Xor(
 
 // Print routines unchanged…
 
-void BoolExpr::Print(std::ostream& out) const { /* … */ }
-std::string BoolExpr::toString() const     { /* … */ }
+void BoolExpr::Print(std::ostream& out) const { 
+    switch (op_) {
+        case Op::VAR:
+            out << id_;
+            break;
+        case Op::NOT:
+            out << "¬";
+            if (left_->op_ != Op::VAR)
+                out << "(";
+            left_->Print(out);
+            if (left_->op_ != Op::VAR)
+                out << ")";
+            break;
+        case Op::AND:
+        case Op::OR:
+        case Op::XOR:
+            if (left_->op_ != Op::VAR)
+                out << "(";
+            left_->Print(out);
+            if (left_->op_ != Op::VAR)
+                out << ")";
+            out << " " << OpToString(op_) << " ";
+            if (right_->op_ != Op::VAR)
+                out << "(";
+            right_->Print(out);
+            if (right_->op_ != Op::VAR)
+                out << ")";
+            break;
+        default:
+            assert(false && "unknown BoolExpr op");
+    }
+}
+std::string BoolExpr::toString() const     { 
+    // print content to string
+    std::ostringstream oss;
+    Print(oss);
+    return oss.str();
+}
 bool BoolExpr::evaluate(const std::unordered_map<size_t,bool>& env) const { /* … */ }
-std::string BoolExpr::OpToString(Op op)     { /* … */ }
+std::string BoolExpr::OpToString(Op op) { 
+    switch (op) {
+        case Op::VAR: return "VAR";
+        case Op::NOT: return "NOT";
+        case Op::AND: return "AND";
+        case Op::OR:  return "OR";
+        case Op::XOR: return "XOR";
+        default:      return "UNKNOWN";
+    }
+}
 
 } // namespace KEPLER_FORMAL

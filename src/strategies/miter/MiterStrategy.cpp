@@ -48,32 +48,62 @@ Glucose::Lit tseitinEncode(Glucose::SimpSolver& S,
                            const std::shared_ptr<BoolExpr>& e,
                            std::unordered_map<const BoolExpr*, int>& node2var,
                            std::unordered_map<std::string, int>& varName2idx) {
-  // If we’ve already encoded this node, reuse its var
-  auto it = node2var.find(e.get());
-  if (it != node2var.end())
+  auto getOrCreateVar = [&](const std::string& key) -> int {
+    auto it = varName2idx.find(key);
+    if (it != varName2idx.end()) return it->second;
+    int v = S.newVar();
+    varName2idx[key] = v;
+    return v;
+  };
+
+  auto constLit = [&](bool value) -> Glucose::Lit {
+    const std::string key = value ? "$__CONST_TRUE__" : "$__CONST_FALSE__";
+    int v = getOrCreateVar(key);
+    Glucose::Lit lv = Glucose::mkLit(v);
+    // Duplicating a unit clause is harmless; if you want, you can guard with a set.
+    if (value) S.addClause(lv);
+    else       S.addClause(~lv);
+    return lv;
+  };
+
+  // Reuse already-encoded node
+  if (auto it = node2var.find(e.get()); it != node2var.end())
     return Glucose::mkLit(it->second);
 
-  // Handle leaf‐vars specially to coalesce by name
+  // Optional: if your BoolExpr has explicit constant API, prefer it:
+  // if (e->isConst()) {
+  //   Glucose::Lit lc = constLit(e->constValue()); // bool
+  //   node2var[e.get()] = Glucose::var(lc);
+  //   return lc;
+  // }
+
+  // Handle leaf variables (and constant-like names)
   if (e->getOp() == Op::VAR) {
     const std::string& name = e->getName();
-    int v;
-    auto it2 = varName2idx.find(name);
-    if (it2 == varName2idx.end()) {
-      v = S.newVar();
-      varName2idx[name] = v;
-    } else {
-      v = it2->second;
+
+    // Treat common constant spellings as real constants
+    if (name == "0" || name == "false" || name == "False" || name == "FALSE") {
+      Glucose::Lit lf = constLit(false);
+      node2var[e.get()] = Glucose::var(lf);
+      return lf;
     }
+    if (name == "1" || name == "true" || name == "True" || name == "TRUE") {
+      Glucose::Lit lt = constLit(true);
+      node2var[e.get()] = Glucose::var(lt);
+      return lt;
+    }
+
+    // Regular named variable
+    int v = getOrCreateVar(name);
     node2var[e.get()] = v;
     return Glucose::mkLit(v);
   }
 
-  // Otherwise allocate a fresh var for this gate
+  // Tseitin variable for this gate
   int v = S.newVar();
   Glucose::Lit lit_v = Glucose::mkLit(v);
   node2var[e.get()] = v;
 
-  // Recursively encode children
   auto encodeChild = [&](const std::shared_ptr<BoolExpr>& c) {
     return tseitinEncode(S, c, node2var, varName2idx);
   };
@@ -81,45 +111,41 @@ Glucose::Lit tseitinEncode(Glucose::SimpSolver& S,
   switch (e->getOp()) {
     case Op::NOT: {
       auto a = encodeChild(e->getLeft());
-      // v ↔ ¬a  gives: (¬v ∨ ¬a) ∧ (v ∨ a)
+      // v ↔ ¬a  ≡ (¬v ∨ ¬a) ∧ (v ∨ a)
       S.addClause(~lit_v, ~a);
-      S.addClause(lit_v, a);
+      S.addClause( lit_v,  a);
       break;
     }
-
     case Op::AND: {
       auto a = encodeChild(e->getLeft());
       auto b = encodeChild(e->getRight());
-      // v ↔ (a ∧ b)  ===  (¬v ∨ a) ∧ (¬v ∨ b) ∧ (v ∨ ¬a ∨ ¬b)
-      S.addClause(~lit_v, a);
-      S.addClause(~lit_v, b);
-      S.addClause(lit_v, ~a, ~b);
+      // v ↔ (a ∧ b) ≡ (¬v ∨ a) ∧ (¬v ∨ b) ∧ (v ∨ ¬a ∨ ¬b)
+      S.addClause(~lit_v,  a);
+      S.addClause(~lit_v,  b);
+      S.addClause( lit_v, ~a, ~b);
       break;
     }
-
     case Op::OR: {
       auto a = encodeChild(e->getLeft());
       auto b = encodeChild(e->getRight());
-      // v ↔ (a ∨ b)  ===  (¬a ∨ v) ∧ (¬b ∨ v) ∧ (¬v ∨ a ∨ b)
-      S.addClause(~a, lit_v);
-      S.addClause(~b, lit_v);
+      // v ↔ (a ∨ b) ≡ (¬a ∨ v) ∧ (¬b ∨ v) ∧ (¬v ∨ a ∨ b)
+      S.addClause(~a,  lit_v);
+      S.addClause(~b,  lit_v);
       S.addClause(~lit_v, a, b);
       break;
     }
-
     case Op::XOR: {
       auto a = encodeChild(e->getLeft());
       auto b = encodeChild(e->getRight());
-      // v ↔ (a XOR b)
+      // v ↔ (a ⊕ b)
       S.addClause(~lit_v, ~a, ~b);
-      S.addClause(~lit_v, a, b);
-      S.addClause(lit_v, ~a, b);
-      S.addClause(lit_v, a, ~b);
+      S.addClause(~lit_v,  a,  b);
+      S.addClause( lit_v, ~a,  b);
+      S.addClause( lit_v,  a, ~b);
       break;
     }
-
     default:
-      // unreachable
+      // Extend with other ops as needed
       break;
   }
 
@@ -135,16 +161,16 @@ bool MiterStrategy::run() {
   naja::DNL::destroy();
   univ->setTopDesign(top0_);
   builder.build();
-  auto PIs0 = builder.getInputs();
-  auto POs0 = builder.getPOs();
+  const auto& PIs0 = builder.getInputs();
+  const auto& POs0 = builder.getPOs();
   auto outputs0 = builder.getOutputs();
   auto inputs2inputsIDs0 = builder.getInputs2InputsIDs();
   auto outputs2outputsIDs0 = builder.getOutputs2OutputsIDs();
   naja::DNL::destroy();
   univ->setTopDesign(top1_);
   builder.build();
-  auto PIs1 = builder.getInputs();
-  auto POs1 = builder.getPOs();
+  const auto& PIs1 = builder.getInputs();
+  const auto& POs1 = builder.getPOs();
   auto outputs1 = builder.getOutputs();
   auto inputs2inputsIDs1 = builder.getInputs2InputsIDs();
   auto outputs2outputsIDs1 = builder.getOutputs2OutputsIDs();
@@ -241,6 +267,11 @@ bool MiterStrategy::run() {
       Glucose::SimpSolver singleSolver;
       Glucose::Lit singleRootLit = tseitinEncode(
           singleSolver, singleMiter, singleNode2var, singleVarName2idx);
+      // print singleMiter
+      printf("Single miter for PO %zu: %s\n", i,
+           singleMiter->toString().c_str());
+      
+
       singleSolver.addClause(singleRootLit);
       if (singleSolver.solve()) {
         // print singleMitter
@@ -299,12 +330,15 @@ std::shared_ptr<BoolExpr> MiterStrategy::buildMiter(
   }
 
   // Empty miter = always‐false (no outputs to compare)
-  if (A.empty())
+  if (A.empty()) {
+    assert(false);
     return BoolExpr::createFalse();
-
+  }
+  printf("A[0]: %s\n", A[0]->toString().c_str());
+  printf("B[0]: %s\n", B[0]->toString().c_str());
   // Start with the first XOR
   auto miter = BoolExpr::Xor(A[0], B[0]);
-
+  printf("Initial miter: %s\n", miter->toString().c_str());
   // OR in the rest
   for (size_t i = 1, n = A.size(); i < n; ++i) {
     auto diff = BoolExpr::Xor(A[i], B[i]);
