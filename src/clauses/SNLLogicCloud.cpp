@@ -114,7 +114,7 @@ void SNLLogicCloud::compute() {
     std::vector<std::pair<naja::DNL::DNLID, naja::DNL::DNLID>> inputsToMerge;
     for (auto input : currentIterationInputs_) {
       if (isInput(input) || isOutput(input)) {
-        SNLTruthTable tt(1, 2); // uncommented
+        //SNLTruthTable tt(1, 2); // uncommented
         newIterationInputs.push_back(input);
         DEBUG_LOG("Adding input: %s\n",
                   dnl_.getDNLTerminalFromID(input).getSnlBitTerm()->getName().getString().c_str());
