@@ -8,7 +8,6 @@
 #include <functional>
 #include <mutex>
 #include "tbb/concurrent_unordered_map.h"
-#include <tbb/mutex.h>
 
 namespace KEPLER_FORMAL {
 
@@ -55,11 +54,6 @@ public:
     }
     // default constructor
     BoolExpr() = default;
-
-    static tbb::mutex& getMutex() {
-        return tableMutex_;
-    }
-
 private:
     // Private ctor: use factory methods
     BoolExpr(Op op, size_t id,
@@ -120,8 +114,6 @@ private:
 
     // Interning constructor (caller must lock tableMutex_)
     static std::shared_ptr<BoolExpr> createNode(Key const& k);
-
-    static tbb::mutex tableMutex_;
 };
 
 } // namespace KEPLER_FORMAL
