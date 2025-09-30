@@ -21,6 +21,10 @@ BoolExpr::BoolExpr(Op op, size_t id,
 std::shared_ptr<BoolExpr>
 BoolExpr::createNode(Key const& k) {
     // Caller already holds lock on tableMutex_
+    // print the size in GB of table_
+    //printf("BoolExpr table size: %.2f GB\n",
+    //       (table_.size() * (sizeof(Key) + sizeof(std::weak_ptr<BoolExpr>))) / (1024.0*1024.0*1024.0));
+
     auto it = table_.find(k);
     if (it != table_.end()) {
         if (auto existing = it->second.lock())

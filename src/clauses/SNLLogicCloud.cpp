@@ -36,7 +36,7 @@ void SNLLogicCloud::compute() {
     if (isInput(driver)) {
       currentIterationInputs_.push_back(driver);
       table_ = SNLTruthTableTree(inst.getID(), driver, SNLTruthTableTree::Node::Type::P);
-      //printf("Driver %s is a primary input, returning\n",
+      //DEBUG_LOG("Driver %s is a primary input, returning\n",
       //       dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getName().getString().c_str());
       return;
     }
@@ -92,10 +92,10 @@ void SNLLogicCloud::compute() {
   
 
   while (!reachedPIs) {
-    //printf("size of truth table tree: %zu\n", table_.size());
+    //DEBUG_LOG("size of truth table tree: %zu\n", table_.size());
     DEBUG_LOG("---iter---\n");
     DEBUG_LOG("Current iteration inputs: %lu\n", newIterationInputs.size());
-    //printf("term %lu: newIterationInputs size: %zu\n", seedOutputTerm_, newIterationInputs.size());
+    //DEBUG_LOG("term %lu: newIterationInputs size: %zu\n", seedOutputTerm_, newIterationInputs.size());
     // for (auto input : newIterationInputs) {
     //   DEBUG_LOG("newIterationInputs Input: %s(%s)\n",
     //             dnl_.getDNLTerminalFromID(input).getSnlBitTerm()->getName().getString().c_str(),
@@ -108,8 +108,8 @@ void SNLLogicCloud::compute() {
     }
     newIterationInputs.clear();
     //DEBUG_LOG("Truth table: %s\n", table_.getString().c_str());
-    //printf("Truth table size: %zu\n", table_.size());
-    //printf("Current iteration inputs size: %zu\n", currentIterationInputs_.size());
+    //DEBUG_LOG("Truth table size: %zu\n", table_.size());
+    //DEBUG_LOG("Current iteration inputs size: %zu\n", currentIterationInputs_.size());
     DEBUG_LOG("table size: %zu, currentIterationInputs_ size: %zu\n", table_.size(), currentIterationInputs_.size());
     assert(currentIterationInputs_.size() == table_.size());
 
@@ -159,9 +159,9 @@ void SNLLogicCloud::compute() {
       if (!model->getTruthTable(
         dnl_.getDNLTerminalFromID(driver).getSnlBitTerm()->getOrderID()).isInitialized())
       {
-        //printf("#####Truth table for instance %s is not initialized\n",
+        //DEBUG_LOG("#####Truth table for instance %s is not initialized\n",
         //          inst.getSNLModel()->getName().getString().c_str());
-        printf("#####Truth table for instance %s is not initialized\n",
+        DEBUG_LOG("#####Truth table for instance %s is not initialized\n",
                   inst.getSNLInstance()->getModel()->getName().getString().c_str());
         auto* model = const_cast<SNLDesign*>(inst.getSNLModel());
         assert(model->getTruthTable(
@@ -191,7 +191,7 @@ void SNLLogicCloud::compute() {
       break;
     }
 
-    DEBUG_LOG("Merging truth tables with %zu inputs\n", inputsToMerge.size());
+    DEBUG_LOG("--- Merging truth tables with %zu inputs\n", inputsToMerge.size());
     //DEBUG_LOG("Truth table %s\n", table_.getString().c_str());
     table_.concatFull(inputsToMerge);
     reachedPIs = true;
@@ -208,7 +208,7 @@ void SNLLogicCloud::compute() {
     assert(isInput(input));
   }
   if (getAllInputs().size() != currentIterationInputs_.size()) {
-    printf("Number of inputs in the truth table: %zu, number of current iteration inputs: %zu\n",
+    DEBUG_LOG("Number of inputs in the truth table: %zu, number of current iteration inputs: %zu\n",
            getAllInputs().size(), currentIterationInputs_.size());
     assert(false && "Number of inputs in the truth table does not match the number of current iteration inputs");
   }
