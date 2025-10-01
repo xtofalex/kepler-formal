@@ -3,6 +3,8 @@
 #include <memory>
 #include <type_traits>
 #include "BoolExpr.h"
+// for assert
+#include <cassert>
 
 namespace KEPLER_FORMAL {
 
@@ -57,6 +59,7 @@ std::shared_ptr<BoolExpr> BoolExprCache::getExpression(Key const& k) {
             lvl4.at((size_t)rid) = std::shared_ptr<BoolExpr>(
                 new BoolExpr(k.op, k.varId, std::move(L), std::move(R)));
           }
+          assert(lvl4.at((size_t)rid).get() != nullptr);
           return lvl4.at((size_t)rid);
         }
       }
@@ -88,7 +91,6 @@ std::shared_ptr<BoolExpr> BoolExprCache::getExpression(Key const& k) {
 
   // insert into nested maps (operator[] will create missing intermediate maps)
   impl().notTable.at((size_t)k.op).at(k.varId).at(lid).at(rid) = ptr;
-
   return ptr;
 }
 
