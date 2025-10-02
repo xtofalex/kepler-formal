@@ -35,7 +35,7 @@ void initTermsETS() {
 }
 
 TermsPair& getTErmsETS() {
-    initTermsETS();
+    //initTermsETS();
     return *termsETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -86,7 +86,7 @@ void initRelevantETS() {
 }
 
 RelevantPair& getRelevantETS() {
-    initRelevantETS();
+    //initRelevantETS();
     return *relevantETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -155,7 +155,7 @@ void initMemoETS() {
 }
 
 MemoPair& getMemoETS() {
-    initMemoETS();
+    //initMemoETS();
     return *memoETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -223,7 +223,7 @@ void initChildFETS() {
 }
 
 ChildFETSPair& getChildFETS() {
-    initChildFETS();
+    //initChildFETS();
     return *childFETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -331,6 +331,10 @@ Tree2BoolExpr::convert(
     const SNLTruthTableTree&                        tree,
     const std::vector<size_t>& varNames)
 {
+    initChildFETS();
+    initMemoETS();
+    initRelevantETS();
+    initTermsETS();
     const auto* root = tree.getRoot();
     if (!root)
         return nullptr;

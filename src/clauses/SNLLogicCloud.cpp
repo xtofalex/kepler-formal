@@ -26,7 +26,7 @@ void initCurrentIterationInputsETS() {
 }
 
 IterationInputsETSPair& getCurrentIterationInputsETS() {
-  initCurrentIterationInputsETS();
+  //initCurrentIterationInputsETS();
   return *currentIterationInputsETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -42,7 +42,7 @@ void initNewIterationInputsETS() {
 }
 
 IterationInputsETSPair& getNewIterationInputsETS() {
-  initNewIterationInputsETS();
+  //initNewIterationInputsETS();
   return *newIterationInputsETSvector[tbb::this_task_arena::current_thread_index()];
 }
 
@@ -127,6 +127,8 @@ bool SNLLogicCloud::isOutput(naja::DNL::DNLID termID) {
 
 void SNLLogicCloud::compute() {
   //std::vector<naja::DNL::DNLID, tbb::tbb_allocator<naja::DNL::DNLID>> newIterationInputs;
+  initNewIterationInputsETS();
+  initCurrentIterationInputsETS();
   clearNewIterationInputsETS();
   clearCurrentIterationInputsETS();
   if (dnl_.getDNLTerminalFromID(seedOutputTerm_).isTopPort() || isOutput(seedOutputTerm_)) {
