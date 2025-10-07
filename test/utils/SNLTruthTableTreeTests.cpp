@@ -39,7 +39,8 @@ static bool maskEval(uint64_t mask, uint32_t idx) {
 //------------------------------------------------------------------------------
 
 TEST(InputNodeTest, ReturnsCorrectValue) {
-  SNLTruthTableTree tree(Node::Type::P);
+  // Use default ctor; tests don't rely on DNL wiring here
+  SNLTruthTableTree tree;
 
   std::vector<bool> inputs{false, true, false};
   auto leaf = std::make_shared<Node>(/*idx=*/1, /*tree=*/&tree);  // inputIndex = 1
@@ -50,7 +51,7 @@ TEST(InputNodeTest, ReturnsCorrectValue) {
 }
 
 TEST(InputNodeTest, ThrowsIfIndexOutOfRange) {
-  SNLTruthTableTree tree(Node::Type::P);
+  SNLTruthTableTree tree;
   std::vector<bool> inputs{true, false};
   auto leaf = std::make_shared<Node>(/*idx=*/2, /*tree=*/&tree);  // inputIndex = 2
   EXPECT_THROW(leaf->eval(inputs), std::out_of_range);
@@ -89,7 +90,8 @@ TEST(TableNodeTest, NotGateLogic) {
 TEST(TableNodeTest, ThrowsOnTableSizeMismatch) {
   const uint64_t tinyMask = 0b01; // size=1
   // build a P node and attach two input children to simulate mismatch
-  SNLTruthTableTree tree(Node::Type::P);
+  SNLTruthTableTree tree;
+  // Use P-style node ctor: provide DNL placeholders if necessary
   auto pnode = std::make_shared<Node>(&tree, naja::DNL::DNLID_MAX, naja::DNL::DNLID_MAX); // P node (no DNL)
   pnode->addChild(std::make_shared<Node>(0, &tree));
   pnode->addChild(std::make_shared<Node>(1, &tree));
@@ -126,7 +128,7 @@ TEST(SNLTruthTableTreeTest, ComposeAndNotIsNand) {
 
 TEST(SNLTruthTableTreeTest, ThrowsOnWrongExternalSize) {
   // Use Input node to test index-out-of-range behavior
-  SNLTruthTableTree tree(Node::Type::P);
+  SNLTruthTableTree tree;
   auto inNode = std::make_shared<Node>(0, &tree);
   // empty vector -> input node should throw out_of_range
   EXPECT_THROW(inNode->eval({}), std::out_of_range);
