@@ -84,6 +84,7 @@
         "cassert": "cpp",
         "execution": "cpp",
         "complex": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "source_location": "cpp"
     }
 }
