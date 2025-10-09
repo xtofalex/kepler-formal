@@ -107,7 +107,10 @@ BoolExpr* BoolExprCache::getExpression(Key const& k) {
 
   // insert; if another thread inserted concurrently, use that one
   auto pr = tbl.insert({tk, newptr});
-  if (!pr.second) return pr.first->second;
+  if (!pr.second) { 
+    delete newptr;
+    return pr.first->second;
+  }
   return newptr;
 }
 
