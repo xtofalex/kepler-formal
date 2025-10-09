@@ -114,4 +114,11 @@ BoolExpr* BoolExprCache::getExpression(Key const& k) {
   return newptr;
 }
 
+BoolExprCache::~BoolExprCache() {
+  // delete all stored BoolExpr*
+  for (auto& kv : impl().table) {
+    delete kv.second;
+  }
+}
+
 } // namespace KEPLER_FORMAL
