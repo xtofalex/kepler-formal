@@ -15,8 +15,14 @@
 #include "SNLLibertyConstructor.h"
 
 int main(int argc, char** argv) {
-  printf("KEPLER FORMAL: Run.\n");
+  
   using namespace std::chrono;
+
+  // Help print when --help or -h is provided
+  if (argc < 3 || (std::string(argv[1]) == "--help") || (std::string(argv[1]) == "-h")) {
+    printf("Usage: kepler_formal <naja-if-dir-1> <naja-if-dir-2> [<liberty-file>...]\n");
+    return EXIT_SUCCESS;
+  }
 
   // --------------------------------------------------------------------------
   // 1. Parse command‐line arguments into inputPaths (requires exactly 2 paths)
@@ -25,7 +31,7 @@ int main(int argc, char** argv) {
   //   SPDLOG_CRITICAL("Usage: {} <naja-if-dir-1> <naja-if-dir-2>", argv[0]);
   //   return EXIT_FAILURE;
   // }
-
+  printf("KEPLER FORMAL: Run.\n");
   std::vector<std::string> inputPaths;
   for (int i = 1; i < argc; ++i) {
     inputPaths.emplace_back(argv[i]);
