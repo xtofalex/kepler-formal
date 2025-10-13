@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Kepler-Formal is a logic equivalence checking (LEC) tool that operates on the naja interchange format(https://github.com/najaeda/naja-if). It is designed for verifying incremental edits produced by the najaeda Python library or any workflow that preserves stable indices across modifications so that corresponding items retain the same identifiers. Kepler-Formal focuses today on combinational equivalence checking only — sequential boundary changes are not supported yet and remain planned work.
+Kepler-Formal is a logic equivalence checking (LEC) tool that operates on the naja interchange format(https://github.com/najaeda/naja-if). It is designed for verifying incremental edits produced by the najaeda Python library(https://pypi.org/project/najaeda/) or any workflow that preserves stable indices across modifications so that corresponding items retain the same identifiers. Kepler-Formal focuses today on combinational equivalence checking only — sequential boundary changes are not supported yet and remain planned work.
 
 ### Acknowledgement
 
