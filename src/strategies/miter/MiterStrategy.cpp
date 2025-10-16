@@ -55,7 +55,7 @@ void ensureLoggerInitialized() {
       std::string logFileName = "miter_log_" + std::to_string(logIndex) + ".txt";
       auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
       logger = std::make_shared<spdlog::logger>("miter_logger", file_sink);
-      logger->set_level(spdlog::level::debug);
+      logger->set_level(spdlog::level::info);
       logger->flush_on(spdlog::level::info);
       spdlog::register_logger(logger);
     } catch (const spdlog::spdlog_ex& ex) {
@@ -459,7 +459,7 @@ bool MiterStrategy::run() {
       singleSolver.addClause(singleRootLit);
       if (singleSolver.solve()) {
         failedPOs_.push_back(outputs0[i]);
-        logger->error("Check failed for PO: {}", i);
+        logger->info("Check failed for PO: {}", i);
         std::vector<naja::NL::SNLDesign*> topModels;
         topModels.push_back(top0_);
         topModels.push_back(top1_);
@@ -627,6 +627,6 @@ BoolExpr* MiterStrategy::buildMiter(
     auto diff = BoolExpr::Xor(A[i], B[i]);
     miter = BoolExpr::Or(miter, diff);
   }
-  logger->trace("buildMiter produced expression: {}", miter->toString());
+  //logger->trace("buildMiter produced expression: {}", miter->toString());
   return miter;
 }
