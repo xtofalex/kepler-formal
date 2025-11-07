@@ -32,9 +32,9 @@ class MiterStrategy {
   
 
  private:
-  BoolExpr* buildMiter(
-      const tbb::concurrent_vector<BoolExpr*>& A,
-      const tbb::concurrent_vector<BoolExpr*>& B) const;
+  std::shared_ptr<BoolExpr> buildMiter(
+      const tbb::concurrent_vector<std::shared_ptr<BoolExpr>>& A,
+      const tbb::concurrent_vector<std::shared_ptr<BoolExpr>>& B) const;
 
   naja::NL::SNLDesign* top0_ = nullptr;
   naja::NL::SNLDesign* top1_ = nullptr;
@@ -44,6 +44,7 @@ class MiterStrategy {
   BoolExpr miterClause_;
   std::string prefix_;
   naja::NL::SNLDesign* topInit_ = nullptr;
+  std::vector<naja::DNL::DNLFull> dnls_;
 };
 
 }  // namespace KEPLER_FORMAL
