@@ -1,5 +1,5 @@
 # Copyright 2024-2025 keplertech.io
-# SPDX-License-Identifier: GPL-3.0
+# SPDX-License-Identifier: GPL-3.0-only
 
 add_executable(kepler_formal KeplerFormal.cpp)
 target_include_directories(kepler_formal SYSTEM BEFORE PUBLIC ${Boost_INCLUDE_DIR})
