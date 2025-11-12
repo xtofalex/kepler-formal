@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: naja 
+Upstream-Contact: Christophe Alexandre <contact@keplertech.io>
+Source: https://github.com/keplertech/kepler-formal
+
+Files: src/*
+Copyright: 2025 keplertech.io
+License: GPL-2.0
