@@ -22,10 +22,7 @@ liberty_files = list(map(lambda p:path.join(benchmarks, p), liberty_files))
     
 netlist.load_liberty(liberty_files)
 top = netlist.load_verilog('tinyrocket.v')
-leafCount = 0
-for leaf in top.get_leaf_children():
-    leafCount += 1
-print("Leaf children count: ", leafCount)
+netlist.dump_naja_if('tinyrocket.if')
 u = naja.NLUniverse.get()
 db = u.getTopDesign().getDB()
 prims = list(db.getPrimitiveLibraries())
@@ -39,13 +36,17 @@ for term in inst.get_output_bit_terms():
     print(term)
 
 net = None
+index = 0
 for input in top.get_input_bit_terms():
-    net = input.get_lower_net()
-    input.disconnect_lower_net()
-    print(input)
-    break
+    if index == 2:
+        net = input.get_lower_net()
+        input.disconnect_lower_net()
+        print(input)
+        break
+    index += 1
 
 out = None
+index = 0
 for output in inst.get_output_bit_terms():
     out = output
     break
