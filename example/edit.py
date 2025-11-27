@@ -76,4 +76,3 @@ if number_of_drivers > 1:
 net.set_name("edit")
 netlist.dump_naja_if('tinyrocket_naja_edited.if')
 netlist.get_top().dump_verilog('tinyrocket_edited.v')
-top.dump_verilog('tinyrocket_edited2.v')
