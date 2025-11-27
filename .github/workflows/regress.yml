@@ -74,6 +74,7 @@ jobs:
       run: pip install najaeda
 
     - name: Execute edit.py
+      working-directory: ${{github.workspace}}/example
       run: python edit.py
 
     - name: Run on naja if edited
