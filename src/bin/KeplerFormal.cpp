@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 
   std::string formatType = argv[1];
 
-  if (formatType == "-snl") {
+  if (formatType == "-naja_if") {
     inputFormatType = FormatType::SNL;
   } else if (formatType == "-verilog") {
     inputFormatType = FormatType::VERILOG;
