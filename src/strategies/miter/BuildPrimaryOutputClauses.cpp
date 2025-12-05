@@ -360,7 +360,7 @@ void BuildPrimaryOutputClauses::collect() {
     KeyT key{ path, std::move(ids) };
     outputsMap_[std::move(key)]  =
             output;
-    printf("Output collected: %s\n", naja::DNL::get()
+    DEBUG_LOG("Output collected: %s\n", naja::DNL::get()
                                          ->getDNLTerminalFromID(output)
                                          .getSnlBitTerm()
                                          ->getName()
@@ -395,7 +395,7 @@ void BuildPrimaryOutputClauses::build() {
   tbb::task_arena arena(40);
   auto processOutput = [&](size_t i) {
     DNLID out = outputs_[i];
-    printf("Procssing output %zu/%zu: %s\n", ++processedOutputs,
+    DEBUG_LOG("Procssing output %zu/%zu: %s\n", ++processedOutputs,
            outputs_.size(),
            get()
                ->getDNLTerminalFromID(out)
