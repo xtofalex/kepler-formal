@@ -23,6 +23,7 @@
 #include "SNLVRLConstructor.h"
 #include "SNLVRLDumper.h"
 #include "SNLUtils.h"
+#include "SNLPyLoader.h"
 
 static void print_usage(const char* prog) {
   std::printf(
@@ -44,9 +45,11 @@ static std::vector<std::string> yamlToVector(const YAML::Node& node) {
 int main(int argc, char** argv) {
   using namespace std::chrono;
   enum class FormatType { VERILOG, SNL };
+  enum class LibraryFormatType { LIBERTY, PYTHON };
 
   // Default values
   FormatType inputFormatType = FormatType::VERILOG;
+  LibraryFormatType libraryFormatType = LibraryFormatType::LIBERTY;
   std::vector<std::string> inputPaths;
   std::vector<std::string> libertyFiles;
   std::string logLevel = "info";
@@ -79,6 +82,19 @@ int main(int argc, char** argv) {
             inputFormatType = FormatType::VERILOG;
           else {
             SPDLOG_CRITICAL("Unrecognized format in config: {}", fmt);
+            return EXIT_FAILURE;
+          }
+        }
+
+        //library format
+        if (cfg["library_format"] && cfg["library_format"].IsScalar()) {
+          std::string lib_fmt = cfg["library_format"].as<std::string>();
+          if (lib_fmt == "liberty") {
+            libraryFormatType = LibraryFormatType::LIBERTY;
+          } else if (lib_fmt == "python") {
+            libraryFormatType = LibraryFormatType::PYTHON;
+          } else {
+            SPDLOG_CRITICAL("Unrecognized library_format in config: {}", lib_fmt);
             return EXIT_FAILURE;
           }
         }
@@ -169,15 +185,29 @@ int main(int argc, char** argv) {
   bool primitivesAreLoaded = false;
 
   if (!libertyFiles.empty()) {
-    db0 = NLDB::create(NLUniverse::get());
-    auto primitivesLibrary =
-        NLLibrary::create(db0, NLLibrary::Type::Primitives, NLName("PRIMS"));
-    SNLLibertyConstructor constructor(primitivesLibrary);
-    for (const auto& lf : libertyFiles) {
-      std::printf("Loading liberty file: %s\n", lf.c_str());
-      constructor.construct(lf.c_str());
+    if (libraryFormatType == LibraryFormatType::LIBERTY) {
+      db0 = NLDB::create(NLUniverse::get());
+      auto primitivesLibrary =
+          NLLibrary::create(db0, NLLibrary::Type::Primitives, NLName("PRIMS"));
+      SNLLibertyConstructor constructor(primitivesLibrary);
+      for (const auto& lf : libertyFiles) {
+        std::printf("Loading liberty file: %s\n", lf.c_str());
+        constructor.construct(lf.c_str());
+      }
+      primitivesAreLoaded = true;
+    } else if (libraryFormatType == LibraryFormatType::PYTHON) {
+      db0 = NLDB::create(NLUniverse::get());
+      auto primitivesLibrary =
+          NLLibrary::create(db0, NLLibrary::Type::Primitives, NLName("PRIMS"));
+      for (const auto& lf : libertyFiles) {
+        std::printf("Loading python library file: %s\n", lf.c_str());
+        SNLPyLoader::loadPrimitives(primitivesLibrary, lf); // pyLoader(primitivesLibrary);
+      }
+      primitivesAreLoaded = true;
+    } else {
+      SPDLOG_CRITICAL("Unsupported library format type");
+      return EXIT_FAILURE;
     }
-    primitivesAreLoaded = true;
   }
 
   if (inputFormatType == FormatType::VERILOG) {
