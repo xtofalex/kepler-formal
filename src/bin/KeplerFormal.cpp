@@ -43,7 +43,7 @@ static std::vector<std::string> yamlToVector(const YAML::Node& node) {
 }
 
 int main(int argc, char** argv) {
-  using namespace std::chrono;
+  const auto mainStart{std::chrono::steady_clock::now()};
   enum class FormatType { VERILOG, SNL };
   enum class LibraryFormatType { LIBERTY, PYTHON };
 
@@ -169,12 +169,12 @@ int main(int argc, char** argv) {
   else
     spdlog::set_level(spdlog::level::info);
 
-  std::printf("KEPLER FORMAL: Run.\n");
-  std::printf("Input format: %s\n", (inputFormatType == FormatType::SNL) ? "SNL" : "VERILOG");
-  std::printf("Netlist 1: %s\n", inputPaths[0].c_str());
-  std::printf("Netlist 2: %s\n", inputPaths[1].c_str());
+  spdlog::info("KEPLER FORMAL: Run.");
+  spdlog::info("Input format: {}", (inputFormatType == FormatType::SNL) ? "SNL" : "VERILOG");
+  spdlog::info("Netlist 1: {}", inputPaths[0].c_str());
+  spdlog::info("Netlist 2: {}", inputPaths[1].c_str());
   if (!libertyFiles.empty()) {
-    for (const auto& lf : libertyFiles) std::printf("Liberty: %s\n", lf.c_str());
+    for (const auto& lf : libertyFiles) spdlog::info("Liberty: {}", lf);
   }
 
   // --------------------------------------------------------------------------
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
           NLLibrary::create(db0, NLLibrary::Type::Primitives, NLName("PRIMS"));
       SNLLibertyConstructor constructor(primitivesLibrary);
       for (const auto& lf : libertyFiles) {
-        std::printf("Loading liberty file: %s\n", lf.c_str());
+        spdlog::info("Loading liberty file: %s\n", lf.c_str());
         constructor.construct(lf.c_str());
       }
       primitivesAreLoaded = true;
@@ -211,10 +211,14 @@ int main(int argc, char** argv) {
   }
 
   if (inputFormatType == FormatType::VERILOG) {
+    if (db0 == nullptr) {
+      db0 = NLDB::create(NLUniverse::get());
+    }
     auto designLibrary = NLLibrary::create(db0, NLName("DESIGN"));
     SNLVRLConstructor constructor(designLibrary);
     constructor.construct(inputPaths[0].c_str());
     auto top = SNLUtils::findTop(designLibrary);
+    designLibrary->mergeAssigns();
     if (top) {
       db0->setTopDesign(top);
       SPDLOG_INFO("Found top design: {}", top->getString());
@@ -238,17 +242,18 @@ int main(int argc, char** argv) {
   }
   db0->setID(2);  // Increment ID to avoid conflicts
 
-  NLDB* db1 = nullptr;
+  NLDB* db1 = NLDB::create(NLUniverse::get());
+  db1->setID(1);
 
   // Prepare second DB and primitives if needed
-  if (!libertyFiles.empty()) {
-    db1 = NLDB::create(NLUniverse::get());
-    db1->setID(1);
-    auto primitivesLibrary =
-        NLLibrary::create(db1, NLLibrary::Type::Primitives, NLName("PRIMS"));
-    SNLLibertyConstructor constructor(primitivesLibrary);
-    for (const auto& lf : libertyFiles) {
-      constructor.construct(lf.c_str());
+  if (libraryFormatType == LibraryFormatType::LIBERTY) {
+    if (!libertyFiles.empty()) {
+      auto primitivesLibrary =
+          NLLibrary::create(db1, NLLibrary::Type::Primitives, NLName("PRIMS"));
+      SNLLibertyConstructor constructor(primitivesLibrary);
+      for (const auto& lf : libertyFiles) {
+        constructor.construct(lf.c_str());
+      }
     }
   }
 
@@ -257,6 +262,7 @@ int main(int argc, char** argv) {
     SNLVRLConstructor constructor(designLibrary);
     constructor.construct(inputPaths[1].c_str());
     auto top = SNLUtils::findTop(designLibrary);
+    designLibrary->mergeAssigns();
     if (top) {
       db1->setTopDesign(top);
       SPDLOG_INFO("Found top design: {}", top->getString());
@@ -293,6 +299,25 @@ int main(int argc, char** argv) {
     SPDLOG_ERROR("Workflow failed: {}", e.what());
     return EXIT_FAILURE;
   }
+  const auto mainEnd{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> mainElapsedSeconds{mainEnd - mainStart};
+  auto memInfo = naja::NajaPerf::getMemoryUsage();
+  auto vmRSS = memInfo.first;
+  auto vmPeak = memInfo.second;
+  SPDLOG_INFO("########################################################");
+  {
+    std::ostringstream oss;
+    oss << "kepler_formal done in: " << mainElapsedSeconds.count() << "s";
+    if (vmRSS != naja::NajaPerf::UnknownMemoryUsage) {
+      oss << " VM(RSS): " << vmRSS / 1024.0 << "Mb";
+    }
+    if (vmPeak != naja::NajaPerf::UnknownMemoryUsage) {
+      oss << " VM(Peak): " << vmPeak / 1024.0 << "Mb";
+    }
+    SPDLOG_INFO(oss.str());
+  }
+  SPDLOG_INFO("########################################################");
+  std::exit(EXIT_SUCCESS);
 
   return EXIT_SUCCESS;
 }
