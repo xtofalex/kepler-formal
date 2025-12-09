@@ -5,7 +5,7 @@ module halfadder(
     output carry
 );
     and carry_and(carry, a, b);
-    xor sum_xor(sum, a, b);
+    or sum_xor(sum, a, b); // <- bug
 endmodule
 
 module fulladder(
