@@ -34,6 +34,7 @@ using namespace KEPLER_FORMAL;
 
 SNLDesign* MiterStrategy::top0_ = nullptr;
 SNLDesign* MiterStrategy::top1_ = nullptr;
+std::string MiterStrategy::logFileName_ = "";
 namespace {
 
 static std::shared_ptr<spdlog::logger> logger;
@@ -45,6 +46,10 @@ void ensureLoggerInitialized() {
       // already exist and then crete mitter_log_(x+1).txt
       int logIndex = 0;
       while (true) {
+        if (MiterStrategy::logFileName_ != "") {
+          logIndex = -1;
+          break;
+        }
         std::string logFileName =
             "miter_log_" + std::to_string(logIndex) + ".txt";
         std::ifstream infile(logFileName);
@@ -56,6 +61,13 @@ void ensureLoggerInitialized() {
       }
       std::string logFileName =
           "miter_log_" + std::to_string(logIndex) + ".txt";
+      if (MiterStrategy::logFileName_ != "") {
+        if (!MiterStrategy::logFileName_.empty()) {
+            std::filesystem::path p(MiterStrategy::logFileName_);
+            std::filesystem::create_directories(p.parent_path());
+            logFileName = p.string();
+        }
+      }
       auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
           logFileName, true);
       logger = std::make_shared<spdlog::logger>("miter_logger", file_sink);
@@ -224,6 +236,13 @@ Glucose::Lit tseitinEncode(
 }
 
 }  // namespace
+
+ MiterStrategy::MiterStrategy(naja::NL::SNLDesign* top0, naja::NL::SNLDesign* top1, const std::string& logFileName, const std::string& prefix)
+      : prefix_(prefix) {
+    top0_ = top0;
+    top1_ = top1;
+    logFileName_ = logFileName;
+  }
 
 void MiterStrategy::normalizeInputs(
     std::vector<naja::DNL::DNLID>& inputs0,
