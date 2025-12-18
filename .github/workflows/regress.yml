@@ -51,7 +51,7 @@ jobs:
       run: |
         mkdir -p regress-output
         # Run kepler-formal on the example files (files are in example/)
-        ./build/src/bin/kepler_formal -naja_if \
+        ./build/src/bin/kepler-formal -naja_if \
           ./example/tinyrocket_naja.if \
           ./example/tinyrocket_naja.if \
           ./example/NangateOpenCellLibrary_typical.lib \
@@ -63,7 +63,7 @@ jobs:
       run: |
         mkdir -p regress-output
         # Run kepler-formal on the example files (files are in example/)
-        ./build/src/bin/kepler_formal -verilog \
+        ./build/src/bin/kepler-formal -verilog \
           ./example/tinyrocket.v \
           ./example/tinyrocket.v \
           ./example/NangateOpenCellLibrary_typical.lib \
@@ -82,14 +82,14 @@ jobs:
       run: |
         mkdir -p regress-output
         # Run kepler-formal on the example files (files are in example/)
-        ../build/src/bin/kepler_formal --config test_config_naja_if.yaml
+        ../build/src/bin/kepler-formal --config test_config_naja_if.yaml
     
     - name: Run on verilog edited
       working-directory: ${{github.workspace}}/example
       run: |
         mkdir -p regress-output
         # Run kepler-formal on the example files (files are in example/)
-        ../build/src/bin/kepler_formal --config test_config_verilog.yaml
+        ../build/src/bin/kepler-formal --config test_config_verilog.yaml
 
 
 
