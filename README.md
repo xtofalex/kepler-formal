@@ -34,7 +34,7 @@ sudo apt-get install g++ libboost-dev python3.9-dev capnproto libcapnp-dev libtb
 On macOS, using [Homebrew](https://brew.sh/):
 
 ```bash
-brew install cmake doxygen capnp tbb bison flex boost spdlog
+brew install cmake doxygen capnp tbb bison flex boost spdlog zlib
 ```
 
 Ensure the versions of `bison` and `flex` installed via Homebrew take precedence over the macOS defaults by modifying your $PATH environment variable as follows:
