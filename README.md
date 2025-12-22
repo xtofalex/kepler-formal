@@ -28,7 +28,7 @@ The property of stable indices is employed to localize the scopes affected by ed
 On Ubuntu:
 
 ```bash
-sudo apt-get install g++ libboost-dev python3.9-dev capnproto libcapnp-dev libtbb-dev pkg-config bison flex doxygen libspdlog-dev 
+sudo apt-get install g++ libboost-dev python3.9-dev capnproto libcapnp-dev libtbb-dev pkg-config bison flex doxygen libspdlog-dev libfmt-dev libboost-iostreams-dev zlib1g-dev
 ```
 
 On macOS, using [Homebrew](https://brew.sh/):
