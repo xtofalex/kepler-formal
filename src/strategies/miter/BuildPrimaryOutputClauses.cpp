@@ -1,4 +1,4 @@
-// Copyright 2024-2025 keplertech.io
+// Copyright 2024-2026 keplertech.io
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "BuildPrimaryOutputClauses.h"
@@ -6,6 +6,7 @@
 #include "SNLDesignModeling.h"
 #include "SNLLogicCloud.h"
 #include "Tree2BoolExpr.h"
+#include "SNLPath.h"
 
 // #define DEBUG_PRINTS
 // #define DEBUG_CHECKS
@@ -331,16 +332,35 @@ void BuildPrimaryOutputClauses::collect() {
   inputs_ = collectInputs();
   sortInputs();
   for (const auto& input : inputs_) {
-    inputsMap_[naja::DNL::get()->getDNLTerminalFromID(input).getFullPathIDs()] =
-        input;
+    std::vector<NLName> path = naja::DNL::get()->getDNLTerminalFromID(input).getDNLInstance().getPath().getPathNames();
+    auto pathIDs = naja::DNL::get()->getDNLTerminalFromID(input).getFullPathIDs();
+    using KeyT = std::pair<std::vector<NLName>, std::vector<NLID::DesignObjectID>>;
+
+    std::vector<NLID::DesignObjectID> ids = {
+         (NLID::DesignObjectID)pathIDs[pathIDs.size()-2],
+          (NLID::DesignObjectID)pathIDs[pathIDs.size()-1] 
+    };
+
+    KeyT key{ path, std::move(ids) };
+    inputsMap_[std::move(key)]  =
+            input;
   }
   outputs_ = collectOutputs();
   sortOutputs();
   for (const auto& output : outputs_) {
-    outputsMap_
-        [naja::DNL::get()->getDNLTerminalFromID(output).getFullPathIDs()] =
+    std::vector<NLName> path = naja::DNL::get()->getDNLTerminalFromID(output).getDNLInstance().getPath().getPathNames();
+    auto pathIDs = naja::DNL::get()->getDNLTerminalFromID(output).getFullPathIDs();
+    using KeyT = std::pair<std::vector<NLName>, std::vector<NLID::DesignObjectID>>;
+
+    std::vector<NLID::DesignObjectID> ids = {
+         (NLID::DesignObjectID)pathIDs[pathIDs.size()-2],
+          (NLID::DesignObjectID)pathIDs[pathIDs.size()-1] 
+    };
+
+    KeyT key{ path, std::move(ids) };
+    outputsMap_[std::move(key)]  =
             output;
-    printf("Output collected: %s\n", naja::DNL::get()
+    DEBUG_LOG("Output collected: %s\n", naja::DNL::get()
                                          ->getDNLTerminalFromID(output)
                                          .getSnlBitTerm()
                                          ->getName()
@@ -375,7 +395,7 @@ void BuildPrimaryOutputClauses::build() {
   tbb::task_arena arena(40);
   auto processOutput = [&](size_t i) {
     DNLID out = outputs_[i];
-    printf("Procssing output %zu/%zu: %s\n", ++processedOutputs,
+    DEBUG_LOG("Procssing output %zu/%zu: %s\n", ++processedOutputs,
            outputs_.size(),
            get()
                ->getDNLTerminalFromID(out)
@@ -484,43 +504,41 @@ void BuildPrimaryOutputClauses::build() {
 void BuildPrimaryOutputClauses::setInputs2InputsIDs() {
   inputs2inputsIDs_.clear();
   for (const auto& input : inputs_) {
-    std::vector<NLID::DesignObjectID> path;
     if (get()->getDNLTerminalFromID(input).isNull()) {
       throw std::runtime_error("Input terminal is null");
     }
     DNLInstanceFull currentInstance =
         get()->getDNLTerminalFromID(input).getDNLInstance();
-    while (currentInstance.isTop() == false) {
-      path.push_back(currentInstance.getSNLInstance()->getID());
-      currentInstance = currentInstance.getParentInstance();
-    }
-    std::reverse(path.begin(), path.end());
+   
     std::vector<NLID::DesignObjectID> termIDs;
     termIDs.push_back(
         get()->getDNLTerminalFromID(input).getSnlBitTerm()->getID());
     termIDs.push_back(
         get()->getDNLTerminalFromID(input).getSnlBitTerm()->getBit());
-    inputs2inputsIDs_[input] = std::make_pair(path, termIDs);
+    std::pair<std::vector<NLName>, std::vector<NLID::DesignObjectID>>
+      pair;
+    pair.first = currentInstance.getPath().getPathNames();
+    pair.second = termIDs;
+    inputs2inputsIDs_[input] = pair;
   }
 }
 
 void BuildPrimaryOutputClauses::setOutputs2OutputsIDs() {
   outputs2outputsIDs_.clear();
   for (const auto& output : outputs_) {
-    std::vector<NLID::DesignObjectID> path;
+    std::pair<std::vector<NLName>, std::vector<NLID::DesignObjectID>> path;
+    std::vector<NLID::DesignObjectID> termIDs;
     DNLInstanceFull currentInstance =
         get()->getDNLTerminalFromID(output).getDNLInstance();
-    while (currentInstance.isTop() == false) {
-      path.push_back(currentInstance.getSNLInstance()->getID());
-      currentInstance = currentInstance.getParentInstance();
-    }
-    std::reverse(path.begin(), path.end());
-    std::vector<NLID::DesignObjectID> termIDs;
     termIDs.push_back(
         get()->getDNLTerminalFromID(output).getSnlBitTerm()->getID());
     termIDs.push_back(
         get()->getDNLTerminalFromID(output).getSnlBitTerm()->getBit());
-    outputs2outputsIDs_[output] = std::make_pair(path, termIDs);
+    std::pair<std::vector<NLName>, std::vector<NLID::DesignObjectID>>
+      pair;
+    pair.first = currentInstance.getPath().getPathNames();
+    pair.second = termIDs;
+    outputs2outputsIDs_[output] = pair;
   }
 }
 

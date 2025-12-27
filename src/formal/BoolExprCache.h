@@ -1,4 +1,4 @@
-// Copyright 2024-2025 keplertech.io
+// Copyright 2024-2026 keplertech.io
 // SPDX-License-Identifier: GPL-3.0-only
 
 #pragma once
@@ -18,9 +18,9 @@ enum class Op { VAR, AND, OR, NOT, XOR, NONE };
 struct BoolExprCacheKey {
   Op op;
   size_t varId;
-  std::shared_ptr<BoolExpr>
+  const std::shared_ptr<BoolExpr>&
       l;  // raw pointer — not owning; use index/ptr identity for the key
-  std::shared_ptr<BoolExpr> r;  // raw pointer
+  const std::shared_ptr<BoolExpr>& r;  // raw pointer
 };
 
 class BoolExprCache {
