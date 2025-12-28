@@ -207,11 +207,6 @@ TEST(TableNodePyramidTest, EightInputAndPyramid) {
   }
 }
 
-int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
-
 //------------------------------------------------------------------------------
 // SNLTruthTableTree API coverage tests (no DNL dependency)
 //------------------------------------------------------------------------------
@@ -464,4 +459,43 @@ TEST(SNLTruthTableTreeAddChild_Additions, AddChildIdEstablishesParentChildRelati
 
   auto pit = std::find(child->parentIds.begin(), child->parentIds.end(), parentId);
   EXPECT_NE(pit, child->parentIds.end());
+
+  tree.print(); // optional: visualize tree structure
+}
+
+// Add a test for print with multiple children
+
+TEST(SNLTruthTableTreePrintTest, PrintWithMultipleChildren) {
+  printf("--- Tree structure:---\n");
+  SNLTruthTableTree tree(0,0, SNLTruthTableTree::Node::Type::P);
+
+  auto parent = std::make_shared<Node>(0u, &tree);
+  parent->type = Node::Type::Table;
+  parent->truthTable = makeMaskTable(2, 0b1110); // 2-input OR
+  uint32_t parentId = tree.allocateNode(parent);
+
+  auto child1 = std::make_shared<Node>(0u, &tree);
+  child1->type = Node::Type::Input;
+  child1->data.inputIndex = 0;
+  child1->truthTable = SNLTruthTable();
+  uint32_t child1Id = tree.allocateNode(child1);
+
+  auto child2 = std::make_shared<Node>(0u, &tree);
+  child2->type = Node::Type::Input;
+  child2->data.inputIndex = 1;
+  child2->truthTable = SNLTruthTable();
+  uint32_t child2Id = tree.allocateNode(child2);
+
+  parent->addChildId(child1Id);
+  parent->addChildId(child2Id);
+
+  // Capture the output of print (optional)
+  //testing::internal::CaptureStdout();
+  printf("--- Tree structure:---\n");
+  tree.print();
+}
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
