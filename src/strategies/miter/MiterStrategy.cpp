@@ -555,6 +555,7 @@ bool MiterStrategy::run() {
     for (size_t i = 0; i < POs0.size(); ++i) {
       if (builder0.getOutputs2OutputsIDs().at(builder0.getDNLIDforOutput(i)) !=
           builder1.getOutputs2OutputsIDs().at(builder1.getDNLIDforOutput(i))) {
+        // LCOV_EXCL_START
         auto path0 = builder0.getOutputs2OutputsIDs().at(builder0.getDNLIDforOutput(i));
         auto path1 = builder1.getOutputs2OutputsIDs().at(builder1.getDNLIDforOutput(i));
         // print path0
@@ -575,6 +576,7 @@ bool MiterStrategy::run() {
         logger->info("\n");
         throw std::runtime_error("Miter PO index " + std::to_string(i) +
                                  " DNLIDs do not match");
+        // LCOV_EXCL_STOP
       }
       tbb::concurrent_vector<std::shared_ptr<BoolExpr>> singlePOs0S;
       singlePOs0S.push_back(POs0[i]);
