@@ -445,13 +445,19 @@ std::shared_ptr<BoolExpr> Tree2BoolExpr::convert(
         auto parent = node->tree->nodeFromId(node->parentIds[0]);
         assert(parent && parent->type == SNLTruthTableTree::Node::Type::P);
         if (parent->data.termid >= varNames.size()) {
-          printf("varNames size: %zu, parent data.termid: %zu\n", varNames.size(), (size_t)parent->data.termid);
+          DEBUG_LOG("varNames size: %zu, parent data.termid: %zu\n", varNames.size(), (size_t)parent->data.termid);
           assert(parent->data.termid < varNames.size());
         }
         if (varNames[parent->data.termid] == (size_t)-1) {
           throw std::runtime_error("Input variable index is SIZE_MAX");
         }
-        setMemoETS(id, BoolExpr::Var(varNames[parent->data.termid]));
+        if (varNames[parent->data.termid] == 0) {
+           setMemoETS(id, BoolExpr::createFalse());
+        } else if (varNames[parent->data.termid] == 1) {
+           setMemoETS(id, BoolExpr::createTrue());
+        } else {
+          setMemoETS(id, BoolExpr::Var(varNames[parent->data.termid]));
+        }
       }
     } else {
       // post-visit for Table / P
