@@ -423,17 +423,6 @@ const SNLTruthTableTree::Node& SNLTruthTableTree::concatBody(
   return *newNodeSp;
 }
 
-//----------------------------------------------------------------------
-// concat / concatFull
-//----------------------------------------------------------------------
-void SNLTruthTableTree::concat(size_t borderIndex,
-                               naja::DNL::DNLID instid,
-                               naja::DNL::DNLID termid) {
-  auto const& n = concatBody(borderIndex, instid, termid);
-  numExternalInputs_ += (n.getTruthTable().size() - 1);
-  updateBorderLeaves();
-}
-
 void SNLTruthTableTree::concatFull(
     const std::vector<
         std::pair<naja::DNL::DNLID, naja::DNL::DNLID>,

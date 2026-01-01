@@ -197,22 +197,29 @@ int main(int argc, char** argv) {
       db0->setTopDesign(top);
       SPDLOG_INFO("Found top design: {}", top->getString());
     } else {
-      SPDLOG_ERROR("No top design was found after parsing verilog");
+      // LCOV_EXCL_START
+      SPDLOG_CRITICAL("No top design was found after parsing verilog");
+      return EXIT_FAILURE;
+      // LCOV_EXCL_STOP
     }
   } else {  // SNL
     std::printf("Loading SNL file: %s\n", inputPaths[0].c_str());
     db0 = SNLCapnP::load(inputPaths[0].c_str(), primitivesAreLoaded);
     if (!db0) {
+      // LCOV_EXCL_START
       SPDLOG_CRITICAL("Failed to load SNL file: {}", inputPaths[0]);
       return EXIT_FAILURE;
+      // LCOV_EXCL_STOP
     }
   }
 
   // get db0 top
   auto top0 = db0->getTopDesign();
   if (!top0) {
+    // LCOV_EXCL_START
     SPDLOG_CRITICAL("Top design not set for first netlist");
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
   db0->setID(2);  // Increment ID to avoid conflicts
 
@@ -239,22 +246,29 @@ int main(int argc, char** argv) {
       db1->setTopDesign(top);
       SPDLOG_INFO("Found top design: {}", top->getString());
     } else {
-      SPDLOG_ERROR("No top design was found after parsing verilog");
+      // LCOV_EXCL_START
+      SPDLOG_CRITICAL("No top design was found after parsing verilog");
+      return EXIT_FAILURE;
+      // LCOV_EXCL_STOP
     }
   } else {  // SNL
     std::printf("Loading SNL file: %s\n", inputPaths[1].c_str());
     db1 = SNLCapnP::load(inputPaths[1].c_str(), primitivesAreLoaded);
     if (!db1) {
+      // LCOV_EXCL_START
       SPDLOG_CRITICAL("Failed to load SNL file: {}", inputPaths[1]);
       return EXIT_FAILURE;
+      // LCOV_EXCL_STOP
     }
   }
 
   // get db1 top
   auto top1 = db1->getTopDesign();
   if (!top1) {
+    // LCOV_EXCL_START
     SPDLOG_CRITICAL("Top design not set for second netlist");
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
 
   // --------------------------------------------------------------------------
@@ -268,8 +282,10 @@ int main(int argc, char** argv) {
       SPDLOG_INFO("Difference was found. Please refer to the log(miter_log_x.txt) for details.");
     }
   } catch (const std::exception& e) {
+    // LCOV_EXCL_START
     SPDLOG_ERROR("Workflow failed: {}", e.what());
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
 
   return EXIT_SUCCESS;

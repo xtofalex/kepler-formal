@@ -495,6 +495,20 @@ TEST(SNLTruthTableTreePrintTest, PrintWithMultipleChildren) {
   tree.print();
 }
 
+TEST(SNLTruthTableTreeSizeEvalTest, SizeAndEvalBehavior) {
+  SNLTruthTableTree tree(0,0, SNLTruthTableTree::Node::Type::P);
+
+  EXPECT_EQ(tree.size(), 1u); // P node has one external input
+
+  // Eval with correct size
+  EXPECT_NO_THROW(tree.eval({true}));
+  EXPECT_NO_THROW(tree.eval({false}));
+
+  // Eval with incorrect size
+  EXPECT_THROW(tree.eval({}), std::invalid_argument);
+  EXPECT_THROW(tree.eval({true, false}), std::invalid_argument);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
