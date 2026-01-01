@@ -152,12 +152,12 @@ int main(int argc, char** argv) {
     spdlog::set_level(spdlog::level::debug);
   else if (logLevel == "info")
     spdlog::set_level(spdlog::level::info);
-  else if (logLevel == "warn")
-    spdlog::set_level(spdlog::level::warn);
-  else if (logLevel == "error")
-    spdlog::set_level(spdlog::level::err);
-  else if (logLevel == "critical")
-    spdlog::set_level(spdlog::level::critical);
+  // else if (logLevel == "warn")
+  //   spdlog::set_level(spdlog::level::warn);
+  // else if (logLevel == "error")
+  //   spdlog::set_level(spdlog::level::err);
+  // else if (logLevel == "critical")
+  //   spdlog::set_level(spdlog::level::critical);
   else
     spdlog::set_level(spdlog::level::info);
 

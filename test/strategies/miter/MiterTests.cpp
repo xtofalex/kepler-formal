@@ -866,6 +866,123 @@ TEST(KeplerCliSubprocessTests, ConfigParsingViaFilesCoversYamlToVectorBehavior) 
   std::filesystem::remove(tmpSeqMaps);
 }
 
+TEST_F(MiterTests, CoverDiff) {
+  // 1. Create SNL
+  NLUniverse* univ = NLUniverse::create();
+  NLDB* db = NLDB::create(univ);
+  NLLibrary* library =
+      NLLibrary::create(db, NLLibrary::Type::Primitives, NLName("nangate45"));
+  // 2. Create a top model with one output
+  NLLibrary* libraryDesigns =
+      NLLibrary::create(db, NLLibrary::Type::Standard, NLName("designs"));
+  SNLDesign* top =
+      SNLDesign::create(libraryDesigns, SNLDesign::Type::Standard, NLName("top"));
+  univ->setTopDesign(top);
+  auto topin =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("in"));
+  auto topin2 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Input, NLName("in2"));
+  auto topOut =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out"));
+  auto topOut2 =
+      SNLScalarTerm::create(top, SNLTerm::Direction::Output, NLName("out2"));
+  // 3. create a logic_0 model
+  SNLDesign* logic0 =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("LOGIC0"));
+  // add output to logic0
+  auto logic0Out =
+      SNLScalarTerm::create(logic0, SNLTerm::Direction::Output, NLName("out"));
+  // 4. create a logic_1 model
+  SNLDesign* logic1 =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("LOGIC1"));
+  // add output to logic0
+  auto logic1Out =
+      SNLScalarTerm::create(logic1, SNLTerm::Direction::Output, NLName("out"));
+  SNLDesignModeling::setTruthTable(logic0, SNLTruthTable(0, 0));
+  SNLDesignModeling::setTruthTable(logic1, SNLTruthTable(0, 1));
+  NLLibraryTruthTables::construct(library);
+  // 5. create a logic_0 instace in top
+  SNLInstance* inst1 = SNLInstance::create(top, logic0, NLName("logic0"));
+  // 6. create a logic_1 instace in top
+  SNLInstance* inst2 = SNLInstance::create(top, logic1, NLName("logic1"));
+  // 7. create a and model
+  SNLDesign* seqModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("AND"));
+
+  // add 2 inputs and 1 output to and
+  auto andIn1 =
+      SNLScalarTerm::create(seqModel, SNLTerm::Direction::Input, NLName("in1"));
+  auto andIn2 =
+      SNLScalarTerm::create(seqModel, SNLTerm::Direction::Input, NLName("in2"));
+  auto andOut = SNLScalarTerm::create(seqModel, SNLTerm::Direction::Output,
+                                      NLName("out"));
+  // 8. create a and instance in top
+  SNLInstance* inst3 = SNLInstance::create(top, seqModel, NLName("and"));
+  SNLInstance* inst4 = SNLInstance::create(top, seqModel, NLName("and2"));
+  // set truth table for and model
+  //SNLDesignModeling::setTruthTable(andModel, SNLTruthTable(2, 8));
+  // 9. connect all instances inputs
+  SNLNet* net1 = SNLScalarNet::create(top, NLName("logic_0_net"));
+  net1->setType(SNLNet::Type::Assign0);
+  SNLNet* net2 = SNLScalarNet::create(top, NLName("logic_1_net"));
+  net2->setType(SNLNet::Type::Assign1);
+  SNLNet* net3 = SNLScalarNet::create(top, NLName("and_output_net"));
+  SNLNet* net4 = SNLScalarNet::create(top, NLName("and2_output_net"));
+  // connect logic0 to and
+  inst1->getInstTerm(logic0Out)->setNet(net1);
+
+  inst4->getInstTerm(andIn1)->setNet(net2);
+  inst4->getInstTerm(andIn2)->setNet(net2);
+  // connect logic1 to and
+  inst2->getInstTerm(logic1Out)->setNet(net2);
+  inst3->getInstTerm(andIn2)->setNet(net1);
+  inst3->getInstTerm(andIn1)->setNet(net4);
+  // connect the and instance output to the top output
+  inst3->getInstTerm(andOut)->setNet(net3);
+  topOut->setNet(net3);
+  inst4->getInstTerm(andOut)->setNet(net4);
+  topOut2->setNet(net4);
+
+  SNLDesign* topClone0 = top->clone(NLName("topClone0"));
+  SNLNet* netC0a = SNLScalarNet::create(topClone0, NLName("netC0a"));
+  SNLNet* netC0b = SNLScalarNet::create(topClone0, NLName("netC0b"));
+  auto andC0 = topClone0->getInstance(NLName("and"));
+  andC0->getInstTerm(andIn1->getID())->setNet(netC0a);
+  andC0->getInstTerm(andIn2->getID())->setNet(netC0b);
+  topClone0->getBitTerm(topin->getID(), 0)->setNet(netC0a);
+  SNLInstance* constC0 = SNLInstance::create(topClone0, logic0, NLName("logic0C0"));
+  constC0->getInstTerm(logic0Out->getID())->setNet(netC0b);
+
+  SNLDesign* topClone1 = top->clone(NLName("topClone1"));
+  SNLNet* netC1a = SNLScalarNet::create(topClone1, NLName("netC1a"));
+  SNLNet* netC1b = SNLScalarNet::create(topClone1, NLName("netC1b"));
+  auto andC1 = topClone1->getInstance(NLName("and"));
+  andC1->getInstTerm(andIn1->getID())->setNet(netC1a);
+  andC1->getInstTerm(andIn2->getID())->setNet(netC1b);
+  SNLInstance* constC1 = SNLInstance::create(topClone1, logic0, NLName("logic0C1"));
+  SNLDesign* inverterModel =
+      SNLDesign::create(library, SNLDesign::Type::Primitive, NLName("INV"));
+  // set truth table for inverter model
+  auto invIn =
+      SNLScalarTerm::create(inverterModel, SNLTerm::Direction::Input, NLName("in"));
+  auto invOut =
+      SNLScalarTerm::create(inverterModel, SNLTerm::Direction::Output, NLName("out"));
+  SNLDesignModeling::setTruthTable(inverterModel, SNLTruthTable(1, 1));
+  auto inverterC1 = SNLInstance::create(topClone1, inverterModel, NLName("inverterC1"));
+  constC1->getInstTerm(logic0Out->getID())->setNet(netC1a);
+  auto netC1invOut = SNLScalarNet::create(topClone1, NLName("netC1invOut"));
+  inverterC1->getInstTerm(invIn->getID())->setNet(netC1b);
+  inverterC1->getInstTerm(invOut->getID())->setNet(netC1invOut);
+  andC1->getInstTerm(andIn1->getID())->setNet(netC1invOut);
+  topClone1->getBitTerm(topin2->getID(), 0)->setNet(netC1b);
+  
+  // 11. create DNL
+  get(); 
+  naja::DNL::destroy();
+  MiterStrategy MiterS(topClone0, topClone1, "CaseD");
+    EXPECT_FALSE(MiterS.run());
+}
+
 TEST(KeplerCliSubprocessTests, ExampleTestRun) {
   std::filesystem::path p(KEPLER_BIN);
   if (!std::filesystem::exists(p)) GTEST_SKIP() << "kepler-formal binary missing";

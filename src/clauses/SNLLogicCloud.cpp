@@ -172,7 +172,13 @@ void SNLLogicCloud::compute() {
       }
       throw std::runtime_error("Seed output term is not a single driver");
     } else if (iso.getDrivers().empty()) {
-      throw std::runtime_error("Seed output term has no drivers");
+      std::string termName = dnl_.getDNLTerminalFromID(seedOutputTerm_)
+                                 .getSnlBitTerm()
+                                 ->getName()
+                                 .getString();
+      std::string error =
+          "Seed output term '" + termName + "' has no drivers";
+      throw std::runtime_error(error);
     }
     // LCOV_EXCL_STOP
     auto driver = iso.getDrivers().front();

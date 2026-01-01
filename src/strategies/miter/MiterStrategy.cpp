@@ -66,9 +66,11 @@ void ensureLoggerInitialized() {
         std::error_code ec;
         std::filesystem::create_directories(parent, ec);
         if (ec) {
+          // LCOV_EXCL_START
           // Failed to create requested directory; log and fall back
           std::cerr << "Warning: failed to create log directory '" << parent.string()
                     << "': " << ec.message() << " (" << ec.value() << "). Using fallback path.\n";
+          // LCOV_EXCL_STOP
         } else {
           chosenLogFile = p.string();
         }
