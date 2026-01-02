@@ -6,7 +6,6 @@ add_executable(miterTests MiterTests.cpp)
 target_link_libraries(miterTests
     naja_nl_dump
     naja_opt
-    kepler_clauses
     formal_strategies
     gmock gtest_main
 )

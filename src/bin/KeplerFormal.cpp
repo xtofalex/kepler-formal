@@ -1,4 +1,4 @@
-// Copyright 2024-2025 keplertech.io
+// Copyright 2024-2026 keplertech.io
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include <chrono>
@@ -245,8 +245,10 @@ int main(int argc, char** argv) {
   // get db0 top
   auto top0 = db0->getTopDesign();
   if (!top0) {
+    // LCOV_EXCL_START
     SPDLOG_CRITICAL("Top design not set for first netlist");
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
   db0->setID(2);  // Increment ID to avoid conflicts
 
@@ -289,8 +291,10 @@ int main(int argc, char** argv) {
   // get db1 top
   auto top1 = db1->getTopDesign();
   if (!top1) {
+    // LCOV_EXCL_START
     SPDLOG_CRITICAL("Top design not set for second netlist");
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
 
   // --------------------------------------------------------------------------
@@ -304,8 +308,10 @@ int main(int argc, char** argv) {
       SPDLOG_INFO("Difference was found. Please refer to the log(miter_log_x.txt) for details.");
     }
   } catch (const std::exception& e) {
+    // LCOV_EXCL_START
     SPDLOG_ERROR("Workflow failed: {}", e.what());
     return EXIT_FAILURE;
+    // LCOV_EXCL_STOP
   }
   const auto mainEnd{std::chrono::steady_clock::now()};
   const std::chrono::duration<double> mainElapsedSeconds{mainEnd - mainStart};
@@ -315,7 +321,7 @@ int main(int argc, char** argv) {
   SPDLOG_INFO("########################################################");
   {
     std::ostringstream oss;
-    oss << "kepler_formal done in: " << mainElapsedSeconds.count() << "s";
+    oss << "kepler-formal done in: " << mainElapsedSeconds.count() << "s";
     if (vmRSS != naja::NajaPerf::UnknownMemoryUsage) {
       oss << " VM(RSS): " << vmRSS / 1024.0 << "Mb";
     }
@@ -326,6 +332,4 @@ int main(int argc, char** argv) {
   }
   SPDLOG_INFO("########################################################");
   std::exit(EXIT_SUCCESS);
-
-  return EXIT_SUCCESS;
 }

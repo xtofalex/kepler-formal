@@ -1,4 +1,4 @@
-// Copyright 2024-2025 keplertech.io
+// Copyright 2024-2026 keplertech.io
 // SPDX-License-Identifier: GPL-3.0-only
 
 #include "Tree2BoolExpr.h"
@@ -15,6 +15,15 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+// #define DEBUG_CHECKS
+// #define DEBUG_PRINTS
+
+#ifdef DEBUG_PRINTS
+#define DEBUG_LOG(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_LOG(fmt, ...)
+#endif
 
 using namespace naja::NL;
 using namespace KEPLER_FORMAL;
@@ -38,7 +47,9 @@ TermsPair& getTErmsETS() {
   initTermsETS();
   size_t idx = tbb::this_task_arena::current_thread_index();
   if (idx >= termsETSvector.size() || termsETSvector[idx] == nullptr) {
+    // LCOV_EXCL_START
     throw std::runtime_error("getTErmsETS: not initialized for this thread");
+    // LCOV_EXCL_STOP
   }
   return *termsETSvector[idx];
 }
@@ -99,7 +110,9 @@ RelevantPair& getRelevantETS() {
   initRelevantETS();
   size_t idx = tbb::this_task_arena::current_thread_index();
   if (idx >= relevantETSvector.size() || relevantETSvector[idx] == nullptr) {
+    // LCOV_EXCL_START
     throw std::runtime_error("getRelevantETS: not initialized for this thread");
+    // LCOV_EXCL_STOP
   }
   return *relevantETSvector[idx];
 }
@@ -117,23 +130,25 @@ void clearRelevantETS() {
   relevantLocal.second = 0;
 }
 
-void pushBackRelevantETS(bool b) {
-  auto& relevantLocal = getRelevantETS();
-  auto& vec = relevantLocal.first;
-  auto& sz = relevantLocal.second;
-  if (vec.size() > sz) {
-    vec[sz] = b;
-    sz++;
-    return;
-  }
-  vec.push_back(b);
-  sz++;
-}
+// void pushBackRelevantETS(bool b) {
+//   auto& relevantLocal = getRelevantETS();
+//   auto& vec = relevantLocal.first;
+//   auto& sz = relevantLocal.second;
+//   if (vec.size() > sz) {
+//     vec[sz] = b;
+//     sz++;
+//     return;
+//   }
+//   vec.push_back(b);
+//   sz++;
+// }
 
 void setRelevantETS(size_t i, bool b) {
   auto& relevantLocal = getRelevantETS();
   if (i >= relevantLocal.second) {
+    // LCOV_EXCL_START
     assert(false && "setRelevantETS: index out of range");
+    // LCOV_EXCL_STOP
   }
   relevantLocal.first[i] = b;
 }
@@ -141,7 +156,9 @@ void setRelevantETS(size_t i, bool b) {
 bool getRelevantETS(size_t i) {
   auto& relevantLocal = getRelevantETS();
   if (i >= relevantLocal.second) {
+    // LCOV_EXCL_START
     throw std::out_of_range("getRelevantETS: index out of range");
+    // LCOV_EXCL_STOP
   }
   return relevantLocal.first[i];
 }
@@ -182,7 +199,9 @@ MemoPair& getMemoETS() {
   initMemoETS();
   size_t idx = tbb::this_task_arena::current_thread_index();
   if (idx >= memoETSvector.size() || memoETSvector[idx] == nullptr) {
+    // LCOV_EXCL_START
     throw std::runtime_error("getMemoETS: not initialized for this thread");
+    // LCOV_EXCL_STOP
   }
   return *memoETSvector[idx];
 }
@@ -200,18 +219,18 @@ void clearMemoETS() {
   memoLocal.second = 0;
 }
 
-void pushBackMemoETS(const std::shared_ptr<BoolExpr>& expr) {
-  auto& memoLocal = getMemoETS();
-  auto& vec = memoLocal.first;
-  auto& sz = memoLocal.second;
-  if (vec.size() > sz) {
-    vec[sz] = expr;
-    sz++;
-    return;
-  }
-  vec.push_back(expr);
-  sz++;
-}
+// void pushBackMemoETS(const std::shared_ptr<BoolExpr>& expr) {
+//   auto& memoLocal = getMemoETS();
+//   auto& vec = memoLocal.first;
+//   auto& sz = memoLocal.second;
+//   if (vec.size() > sz) {
+//     vec[sz] = expr;
+//     sz++;
+//     return;
+//   }
+//   vec.push_back(expr);
+//   sz++;
+// }
 
 void reserveMemoETS(size_t n) {
   auto& memoLocal = getMemoETS();
@@ -264,7 +283,9 @@ ChildFETSPair& getChildFETS() {
   initChildFETS();
   size_t idx = tbb::this_task_arena::current_thread_index();
   if (idx >= childFETSvector.size() || childFETSvector[idx] == nullptr) {
+    // LCOV_EXCL_START
     throw std::runtime_error("getChildFETS: not initialized for this thread");
+    // LCOV_EXCL_STOP
   }
   return *childFETSvector[idx];
 }
@@ -282,18 +303,18 @@ void clearChildFETS() {
   childLocal.second = 0;
 }
 
-void pushBackChildFETS(const std::shared_ptr<BoolExpr>& expr) {
-  auto& childLocal = getChildFETS();
-  auto& vec = childLocal.first;
-  auto& sz = childLocal.second;
-  if (vec.size() > sz) {
-    vec[sz] = expr;
-    sz++;
-    return;
-  }
-  vec.push_back(expr);
-  sz++;
-}
+// void pushBackChildFETS(const std::shared_ptr<BoolExpr>& expr) {
+//   auto& childLocal = getChildFETS();
+//   auto& vec = childLocal.first;
+//   auto& sz = childLocal.second;
+//   if (vec.size() > sz) {
+//     vec[sz] = expr;
+//     sz++;
+//     return;
+//   }
+//   vec.push_back(expr);
+//   sz++;
+// }
 
 void reserveChildFETS(size_t n) {
   auto& childLocal = getChildFETS();
@@ -325,43 +346,43 @@ void setChildFETS(size_t i, const std::shared_ptr<BoolExpr>& expr) {
   childLocal.first[i] = expr;
 }
 
-size_t toSizeT(const std::string& s) {
-  if (s.empty()) {
-    assert(false && "toSizeT: empty string");
-  }
-  size_t result = 0;
-  const size_t max = std::numeric_limits<size_t>::max();
-  for (unsigned char uc : s) {
-    if (!std::isdigit(uc)) {
-      throw std::invalid_argument("toSizeT: invalid character '" + std::string(1, static_cast<char>(uc)) + "' in input");
-    }
-    size_t digit = static_cast<size_t>(uc - '0');
-    // Check for overflow: result * 10 + digit > max
-    if (result > (max - digit) / 10) {
-      throw std::out_of_range("toSizeT: value out of range for size_t");
-    }
-    result = result * 10 + digit;
-  }
-  return result;
-}
+// size_t toSizeT(const std::string& s) {
+//   if (s.empty()) {
+//     assert(false && "toSizeT: empty string");
+//   }
+//   size_t result = 0;
+//   const size_t max = std::numeric_limits<size_t>::max();
+//   for (unsigned char uc : s) {
+//     if (!std::isdigit(uc)) {
+//       throw std::invalid_argument("toSizeT: invalid character '" + std::string(1, static_cast<char>(uc)) + "' in input");
+//     }
+//     size_t digit = static_cast<size_t>(uc - '0');
+//     // Check for overflow: result * 10 + digit > max
+//     if (result > (max - digit) / 10) {
+//       throw std::out_of_range("toSizeT: value out of range for size_t");
+//     }
+//     result = result * 10 + digit;
+//   }
+//   return result;
+// }
 
 // Fold a list of literals into a single AND
-static std::shared_ptr<BoolExpr> mkAnd(
-  const std::vector<std::shared_ptr<BoolExpr>, tbb::tbb_allocator<std::shared_ptr<BoolExpr>>>& lits) {
-  if (lits.empty()) return BoolExpr::createTrue();
-  auto cur = lits[0];
-  for (size_t i = 1; i < lits.size(); ++i) cur = BoolExpr::And(cur, lits[i]);
-  return cur;
-}
+// static std::shared_ptr<BoolExpr> mkAnd(
+//   const std::vector<std::shared_ptr<BoolExpr>, tbb::tbb_allocator<std::shared_ptr<BoolExpr>>>& lits) {
+//   if (lits.empty()) return BoolExpr::createTrue();
+//   auto cur = lits[0];
+//   for (size_t i = 1; i < lits.size(); ++i) cur = BoolExpr::And(cur, lits[i]);
+//   return cur;
+// }
 
-// Fold a list of terms into a single OR
-static std::shared_ptr<BoolExpr> mkOr(
-  const std::vector<std::shared_ptr<BoolExpr>, tbb::tbb_allocator<std::shared_ptr<BoolExpr>>>& terms) {
-  if (terms.empty()) return BoolExpr::createFalse();
-  auto cur = terms[0];
-  for (size_t i = 1; i < terms.size(); ++i) cur = BoolExpr::Or(cur, terms[i]);
-  return cur;
-}
+// // Fold a list of terms into a single OR
+// static std::shared_ptr<BoolExpr> mkOr(
+//   const std::vector<std::shared_ptr<BoolExpr>, tbb::tbb_allocator<std::shared_ptr<BoolExpr>>>& terms) {
+//   if (terms.empty()) return BoolExpr::createFalse();
+//   auto cur = terms[0];
+//   for (size_t i = 1; i < terms.size(); ++i) cur = BoolExpr::Or(cur, terms[i]);
+//   return cur;
+// }
 
 std::shared_ptr<BoolExpr> Tree2BoolExpr::convert(
   const SNLTruthTableTree& tree, const std::vector<size_t>& varNames) {
@@ -422,25 +443,39 @@ std::shared_ptr<BoolExpr> Tree2BoolExpr::convert(
       } else {
         assert(node->type == SNLTruthTableTree::Node::Type::Input);
         if (node->parentIds.size() > 1) {
+          #ifdef DEBUG_PRINTS
           for (const auto& pid : node->parentIds) {
-            printf("%s\n", naja::DNL::get()->getDNLTerminalFromID(tree.nodeFromId(pid)->data.termid)
+            DEBUG_LOG("%s\n", naja::DNL::get()->getDNLTerminalFromID(tree.nodeFromId(pid)->data.termid)
                      .getSnlBitTerm()->getString().c_str());
-            printf("of model %s\n", naja::DNL::get()->getDNLTerminalFromID(tree.nodeFromId(pid)->data.termid)
+            DEBUG_LOG("of model %s\n", naja::DNL::get()->getDNLTerminalFromID(tree.nodeFromId(pid)->data.termid)
                    .getDNLInstance().getSNLModel()->getString().c_str());
           }
+          #endif
         }
-        if (node->parentIds.empty()) { throw std::runtime_error("Input node has no parent"); }
+        if (node->parentIds.empty()) { 
+          // LCOV_EXCL_START
+          throw std::runtime_error("Input node has no parent"); 
+          // LCOV_EXCL_STOP
+        }
         assert(node->parentIds.size() == 1);
         auto parent = node->tree->nodeFromId(node->parentIds[0]);
         assert(parent && parent->type == SNLTruthTableTree::Node::Type::P);
         if (parent->data.termid >= varNames.size()) {
-          printf("varNames size: %zu, parent data.termid: %zu\n", varNames.size(), (size_t)parent->data.termid);
+          DEBUG_LOG("varNames size: %zu, parent data.termid: %zu\n", varNames.size(), (size_t)parent->data.termid);
           assert(parent->data.termid < varNames.size());
         }
         if (varNames[parent->data.termid] == (size_t)-1) {
+          // LCOV_EXCL_START
           throw std::runtime_error("Input variable index is SIZE_MAX");
+          // LCOV_EXCL_STOP
         }
-        setMemoETS(id, BoolExpr::Var(varNames[parent->data.termid]));
+        if (varNames[parent->data.termid] == 0) {
+           setMemoETS(id, BoolExpr::createFalse());
+        } else if (varNames[parent->data.termid] == 1) {
+           setMemoETS(id, BoolExpr::createTrue());
+        } else {
+          setMemoETS(id, BoolExpr::Var(varNames[parent->data.termid]));
+        }
       }
     } else {
       // post-visit for Table / P
