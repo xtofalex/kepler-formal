@@ -3,7 +3,8 @@
 	url = https://github.com/audemard/glucose.git
 [submodule "thirdparty/naja"]
 	path = thirdparty/naja
-	url = https://github.com/nanocoh/naja.git
+	url = https://github.com/najaeda/naja.git
+	branch = main
 [submodule "thirdparty/yaml-cpp"]
 	path = thirdparty/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
